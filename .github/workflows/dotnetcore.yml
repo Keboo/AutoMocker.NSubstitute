@@ -1,7 +1,7 @@
 name: Continuous
 
 on:
-  # PRs will be built, and a package posted to GH Packages
+  # PRs will be built and package artifacts produced.
   pull_request:
 
   workflow_dispatch:
@@ -90,16 +90,6 @@ jobs:
         $packageVersion = '${{ github.ref_name }}'.Substring(1)
         .\.github\scripts\Promote-AnalyzerReleaseDocs.ps1 -PackageVersion $packageVersion
 
-  # Publish to NuGet and GitHub Packages
-    - name: Publish
-      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-      run: |
-        dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate
-        dotnet nuget push *.nupkg `
-          --source 'https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json' `
-          --api-key '${{ github.token }}' `
-          --skip-duplicate
-
   automerge:
     if: github.event_name == 'pull_request'
     needs: build
@@ -111,3 +101,27 @@ jobs:
 
     steps:
       - uses: fastify/github-action-merge-dependabot@v3.15.0
+
+  deploy-nuget:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Required for NuGet trusted publishing through GitHub OIDC.
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v8
+        with:
+          name: NuGet
+
+      - name: NuGet login (OIDC → temporary API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push NuGet (Trusted Publishing)
+        run: dotnet nuget push ${{ github.workspace }}/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
