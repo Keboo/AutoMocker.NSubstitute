@@ -17,6 +17,7 @@
     <PackageDescription>An auto-mocking container that generates substitutes using NSubstitute</PackageDescription>
     <Copyright>Copyright Kevin Bost $([System.DateTime]::UtcNow.ToString("yyyy"))</Copyright>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageIcon>NuGetIcon.png</PackageIcon>
     <PackageProjectUrl>https://github.com/Keboo/AutoMocker.NSubstitute</PackageProjectUrl>
     <Tags>nsubstitute;automocking;testing;TDD</Tags>
 
@@ -43,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="NuGetIcon.png" Pack="true" PackagePath="\" />
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="..\LICENSE.md" Pack="true" PackagePath="" />
     <Compile Include="..\System.Diagnostics.CodeAnalysis.cs" />
