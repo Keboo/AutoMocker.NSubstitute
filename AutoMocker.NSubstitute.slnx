@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="AutoMocker.NSubstitute.Tests/AutoMocker.NSubstitute.Tests.csproj" />
+  <Project Path="AutoMocker.NSubstitute/AutoMocker.NSubstitute.csproj" />
+</Solution>

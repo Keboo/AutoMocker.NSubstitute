@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>NSubstitute.AutoMock.Tests</RootNamespace>
+
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn),CA1707</NoWarn>
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    <Using Include="NSubstitute" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="NSubstitute" />
+    <ProjectReference Include="..\AutoMocker.NSubstitute\AutoMocker.NSubstitute.csproj" />
+  </ItemGroup>
+</Project>
