@@ -1,0 +1,1 @@
+# AutoMocker.NSubstitute
