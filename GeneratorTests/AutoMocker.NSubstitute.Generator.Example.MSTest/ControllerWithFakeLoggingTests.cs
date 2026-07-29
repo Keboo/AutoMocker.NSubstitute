@@ -1,0 +1,51 @@
+﻿using Microsoft.Extensions.Logging.Testing;
+
+namespace NSubstitute.AutoMock.Generator.Example.MSTest;
+
+[TestClass]
+public class ControllerWithFakeLoggingTests
+{
+    [TestMethod]
+    public void CreateInstance_WithFakeLogging_CreatesController()
+    {
+        AutoMocker mocker = new();
+        
+        mocker.WithFakeLogging();
+
+        ControllerWithFakeLogging controller = mocker.CreateInstance<ControllerWithFakeLogging>();
+
+        Assert.IsNotNull(controller);
+        Assert.IsNotNull(controller.Logger);
+    }
+
+    [TestMethod]
+    public void CreateInstance_WithFakeLogging_LogsMessages()
+    {
+        AutoMocker mocker = new();
+        
+        mocker.WithFakeLogging();
+        var provider = mocker.Get<FakeLoggerProvider>();
+
+        ControllerWithFakeLogging controller = mocker.CreateInstance<ControllerWithFakeLogging>();
+        controller.DoWork();
+
+        var logs = provider.Collector.GetSnapshot();
+        Assert.IsNotNull(logs);
+        CollectionAssert.AllItemsAreNotNull(logs.ToList());
+        Assert.Contains(log => log.Message == "Starting work", logs);
+        Assert.Contains(log => log.Message == "Debug message", logs);
+        Assert.Contains(log => log.Message == "Warning message", logs);
+    }
+
+    [TestMethod]
+    public void CreateInstance_WithFakeLogging_CreatesLoggerFactory()
+    {
+        AutoMocker mocker = new();
+        
+        mocker.WithFakeLogging();
+
+        ControllerWithFakeLogging controller = mocker.CreateInstance<ControllerWithFakeLogging>(enablePrivate: true);
+
+        Assert.IsNotNull(controller.LoggerFactory);
+    }
+}

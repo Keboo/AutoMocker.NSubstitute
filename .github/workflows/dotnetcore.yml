@@ -1,34 +1,113 @@
-name: .NET Core
+name: Continuous
 
 on:
-  push:
-    branches: [ main ]
+  # PRs will be built, and a package posted to GH Packages
   pull_request:
-    branches: [ main ]
+
   workflow_dispatch:
+
+  push:
+    paths-ignore:
+    - 'README.md'
+    - 'docs/**'
+
+    # We'll build, pack, and push a pre-release to NuGet on main
+    branches: [ main ]
+
+    # Tagging with v* will build that version number and push a release to Nuget
+    #   e.g. v1.2, v3.4.5, etc.
+    tags:
+    - 'v*'
+
+defaults:
+  run:
+    shell: pwsh
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v6
 
-      - name: Build
-        run: dotnet build --configuration Release
+    - name: NuGet restore
+      run: dotnet restore
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
 
-      - name: Pack
-        run: dotnet pack AutoMocker.NSubstitute/AutoMocker.NSubstitute.csproj --configuration Release --no-build --output packages
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
 
-      - name: Upload package artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: packages
-          path: packages/
+  # Package Release
+    - name: Pack
+      run: |
+        <# If we're a tag, force VersionPrefix to the tag value #>
+        if ('${{ github.ref }}' -match '^refs/tags/v') {
+          $match = [regex]::Match('${{ github.ref }}', '^refs/tags/v([0-9]+(\.[0-9]+){1,2})')
+          if ($match.Success) {
+            $env:VersionPrefix = $match.Groups[1].Value
+          } else {
+            throw 'Invalid tag version: ${{ github.ref }}'
+          }
+        }
+        else {
+          <# All other pushes get a CI suffix #>
+          $env:VersionSuffix = 'ci{0:0000}' -f ${{ github.run_number }}
+        }
+
+        dotnet pack /p:ContinuousIntegrationBuild=true --configuration Release --verbosity normal --output . 
+
+    - name: Upload NuGet
+      uses: actions/upload-artifact@v7
+      with:
+        name: NuGet
+        if-no-files-found: error
+        path: |
+          **/*.nupkg
+          **/*.snupkg
+
+  # Test that MSBuild properties to disable generators work correctly
+    - name: Test Generator Disable Properties
+      run: |
+        <# Create a local NuGet source directory with the packed packages #>
+        New-Item -ItemType Directory -Force -Path ./nupkgs
+        Copy-Item -Path *.nupkg -Destination ./nupkgs/
+        
+        <# Build and run the disable tests using the local NuGet package #>
+        <# The test project's NuGet.config points to ../../nupkgs relative to the project #>
+        dotnet test --project ./GeneratorTests/AutoMocker.NSubstitute.Generator.DisableTests/AutoMocker.NSubstitute.Generator.DisableTests.csproj `
+          --configuration Release `
+          --verbosity normal `
+          /p:LocalNuGetSource=true
+
+  # Move analyzer rules to shipped docs for tag releases
+    - name: Promote Analyzer Release Docs
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        $packageVersion = '${{ github.ref_name }}'.Substring(1)
+        .\.github\scripts\Promote-AnalyzerReleaseDocs.ps1 -PackageVersion $packageVersion
+
+  # Publish to NuGet and GitHub Packages
+    - name: Publish
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      run: |
+        dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_TOKEN }} --skip-duplicate
+        dotnet nuget push *.nupkg `
+          --source 'https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json' `
+          --api-key '${{ github.token }}' `
+          --skip-duplicate
+
+  automerge:
+    if: github.event_name == 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3.15.0

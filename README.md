@@ -1,4 +1,4 @@
-# AutoMocker.NSubstitute
+﻿# AutoMocker.NSubstitute
 
 An auto-mocking container for [NSubstitute](https://nsubstitute.github.io/) — the NSubstitute flavor of [Moq.AutoMocker](https://github.com/moq/Moq.AutoMocker).
 
@@ -44,6 +44,21 @@ mocker.GetSubstitute<IEngineProvider>().Received(1).GetEngine();
 - Built-in resolution of `IEnumerable<T>`, arrays, `Lazy<T>`, `Func<T>`, and `CancellationToken` dependencies.
 - `AsDisposable()` — dispose all disposable instances tracked by the container.
 - Implements `IServiceProvider`.
+
+## Source generators
+
+The package ships with source generators (ported from Moq.AutoMocker) that light up automatically:
+
+- **Constructor null-argument tests** — decorate a partial test class with `[ConstructorTests(TargetType = typeof(MyClass))]`
+  and unit tests asserting `ArgumentNullException` for each constructor parameter are generated for MSTest, NUnit, xUnit, or TUnit.
+- **`WithOptions<T>()`** — generated when `Microsoft.Extensions.Options` is referenced; wires up the options pattern services.
+- **`WithFakeLogging()`** — generated when `Microsoft.Extensions.Diagnostics.Testing` is referenced; resolves `ILogger`/`ILogger<T>`/`ILoggerFactory` with `FakeLogger`.
+- **`WithFakeTimeProvider()`** — generated when `Microsoft.Extensions.TimeProvider.Testing` is referenced.
+- **`WithKeyedService(...)`** — generated when `Microsoft.Extensions.DependencyInjection.Abstractions` 8+ is referenced.
+- **`WithMeterFactory()`** — generated when `System.Diagnostics.DiagnosticSource` 10+ is referenced.
+- **`WithApplicationInsights()`** — generated when `Microsoft.ApplicationInsights` is referenced.
+
+Each generator can be disabled with an MSBuild property, e.g. `<EnableAutoMockerNSubstituteOptionsGenerator>false</EnableAutoMockerNSubstituteOptionsGenerator>`.
 
 ## Differences from Moq.AutoMock
 

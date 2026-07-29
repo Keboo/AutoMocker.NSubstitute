@@ -1,0 +1,14 @@
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace NSubstitute.AutoMock.Generator.Example.MSTest;
+
+[TestClass]
+[ConstructorTests(TargetType = typeof(Controller))]
+public partial class ControllerTests
+{
+    partial void ControllerConstructor_WithNullIService_ThrowsArgumentNullExceptionSetup(AutoMocker mocker)
+    {
+        mocker.Use<string>("");
+    }
+}
+

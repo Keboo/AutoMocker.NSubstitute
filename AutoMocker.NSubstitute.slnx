@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/GeneratorTests/">
+    <Project Path="GeneratorTests/AutoMocker.NSubstitute.Generator.Example.MSTest/AutoMocker.NSubstitute.Generator.Example.MSTest.csproj" />
+    <Project Path="GeneratorTests/AutoMocker.NSubstitute.Generator.Example.NUnit/AutoMocker.NSubstitute.Generator.Example.NUnit.csproj" />
+    <Project Path="GeneratorTests/AutoMocker.NSubstitute.Generator.Example.TUnit/AutoMocker.NSubstitute.Generator.Example.TUnit.csproj" />
+    <Project Path="GeneratorTests/AutoMocker.NSubstitute.Generator.Example.xUnit/AutoMocker.NSubstitute.Generator.Example.xUnit.csproj" />
+    <Project Path="GeneratorTests/AutoMocker.NSubstitute.Generator.Example/AutoMocker.NSubstitute.Generator.Example.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
@@ -7,6 +14,13 @@
     <File Path="LICENSE.md" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/Solution Items/.github/">
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/dotnetcore.yml" />
+  </Folder>
+  <Project Path="AutoMocker.NSubstitute.Generators.Tests/AutoMocker.NSubstitute.Generators.Tests.csproj" />
+  <Project Path="AutoMocker.NSubstitute.Generators/AutoMocker.NSubstitute.Generators.csproj" />
   <Project Path="AutoMocker.NSubstitute.Tests/AutoMocker.NSubstitute.Tests.csproj" />
   <Project Path="AutoMocker.NSubstitute/AutoMocker.NSubstitute.csproj" />
+  <Project Path="Generators/Generators.csproj" />
 </Solution>
