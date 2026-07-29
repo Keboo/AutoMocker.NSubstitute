@@ -61,6 +61,7 @@ jobs:
         dotnet pack /p:ContinuousIntegrationBuild=true --configuration Release --verbosity normal --output . 
 
     - name: Upload NuGet
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v7
       with:
         name: NuGet
