@@ -6,7 +6,7 @@
     <RootNamespace>NSubstitute.AutoMock</RootNamespace>
     <NeutralLanguage>en-US</NeutralLanguage>
 
-    <VersionPrefix Condition="'$(VersionPrefix)' == ''">0.0.1</VersionPrefix>
+    <PackageVersion>0.0.1</PackageVersion>
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);AMG0002</NoWarn>
