@@ -1,0 +1,227 @@
+# AutoMocker.NSubstitute Source Generators
+
+AutoMocker.NSubstitute includes built-in source generators that provide compile-time code generation to enhance your testing experience. These generators automatically create boilerplate test code and extension methods, saving you time and reducing repetitive testing code.
+
+## Available Generators
+
+AutoMocker.NSubstitute includes several source generators:
+
+### 1. [Unit Test Generator](SourceGenerators/UnitTestGenerator.md)
+
+Automatically generates constructor null-check tests for your classes.
+
+**Key Features:**
+- Generates tests for each nullable constructor parameter
+- Supports MSTest, xUnit, NUnit, and TUnit testing frameworks
+- Validates `ArgumentNullException` is thrown with correct parameter names
+- Provides customization hooks for test setup
+
+**Quick Example:**
+```csharp
+[TestClass]
+[ConstructorTests(TargetType = typeof(MyController))]
+public partial class MyControllerTests
+{
+}
+```
+
+[Learn more →](SourceGenerators/UnitTestGenerator.md)
+
+### 2. [Options Extension Generator](SourceGenerators/OptionsExtensionGenerator.md)
+
+Generates `WithOptions<T>()` extension method when `Microsoft.Extensions.Options` is referenced.
+
+**Key Features:**
+- Fluent API for configuring options in tests
+- Sets up complete options infrastructure (`IOptionsMonitor`, `IOptionsSnapshot`, etc.)
+- Simplifies testing of classes that depend on `IOptions<T>`
+
+**Quick Example:**
+```csharp
+mocker.WithOptions<MySettings>(options =>
+{
+    options.Number = 42;
+    options.Required = "test value";
+});
+```
+
+[Learn more →](SourceGenerators/OptionsExtensionGenerator.md)
+
+### 3. [Fake Logging Extension Generator](SourceGenerators/FakeLoggingExtensionGenerator.md)
+
+Generates `WithFakeLogging()` extension method when `Microsoft.Extensions.Diagnostics.Testing` is referenced.
+
+**Key Features:**
+- Captures log messages for verification
+- Uses Microsoft's official testing helpers
+- Enables logging behavior validation in tests
+
+**Quick Example:**
+```csharp
+mocker.WithFakeLogging();
+var provider = mocker.Get<FakeLoggerProvider>();
+
+// ... perform actions ...
+
+var logs = provider.Collector.GetSnapshot();
+Assert.IsTrue(logs.Any(log => log.Message == "Expected message"));
+```
+
+[Learn more →](SourceGenerators/FakeLoggingExtensionGenerator.md)
+
+### 4. [Application Insights Extension Generator](SourceGenerators/ApplicationInsightsExtensionGenerator.md)
+
+Generates `WithApplicationInsights()` and related extension methods when `Microsoft.ApplicationInsights` is referenced. Supports both 2.x and 3.x versions of Application Insights.
+
+**Key Features:**
+- **Application Insights 2.x**: Uses a `FakeTelemetryChannel` with `GetSentTelemetry()` to capture `ITelemetry` items
+- **Application Insights 3.x**: Uses OpenTelemetry in-memory exporters with `GetApplicationInsightsLogRecords()`, `GetApplicationInsightsMetrics()`, and `GetApplicationInsightsActivities()`
+
+**Quick Example (3.x):**
+```csharp
+mocker.WithApplicationInsights();
+var service = mocker.CreateInstance<MyService>();
+service.DoWork();
+
+var logRecords = mocker.GetApplicationInsightsLogRecords();
+Assert.HasCount(2, logRecords);
+```
+
+[Learn more →](SourceGenerators/ApplicationInsightsExtensionGenerator.md)
+
+### 5. [Keyed Services Extension Generator](SourceGenerators/KeyedServicesExtensionGenerator.md)
+
+Generates `WithKeyedService<T>()` extension methods when `Microsoft.Extensions.DependencyInjection` is referenced.
+
+**Key Features:**
+- Enables testing of keyed services via `IKeyedServiceProvider`
+- Supports `[FromKeyedServices]` attribute resolution
+- Provides both eager and lazy service registration
+- Integrates seamlessly with dependency injection
+
+**Quick Example:**
+```csharp
+mocker.WithKeyedService(Substitute.For<IEmailSender>(), "primary");
+mocker.WithKeyedService<ICache, RedisCache>("cache");
+
+var service = mocker.CreateInstance<MyService>();
+// Keyed services are automatically resolved
+```
+
+[Learn more →](SourceGenerators/KeyedServicesExtensionGenerator.md)
+
+### 6. [Meter Factory Extension Generator](SourceGenerators/MeterFactoryExtensionGenerator.md)
+
+Generates `WithMeterFactory()` extension method when `System.Diagnostics.DiagnosticSource` 10.0+ is referenced.
+
+**Key Features:**
+- Provides a real `IMeterFactory` implementation for metrics testing
+- Forwards `Create(MeterOptions)` directly to `new Meter(options)`
+- Tracks and disposes created meters on cleanup
+
+**Quick Example:**
+```csharp
+mocker.WithMeterFactory();
+var service = mocker.CreateInstance<MetricsService>();
+// IMeterFactory is automatically resolved with a working implementation
+```
+
+[Learn more →](SourceGenerators/MeterFactoryExtensionGenerator.md)
+
+### 7. [Fake Time Provider Extension Generator](SourceGenerators/FakeTimeProviderExtensionGenerator.md)
+
+Generates `WithFakeTimeProvider()` extension method when `Microsoft.Extensions.TimeProvider.Testing` is referenced.
+
+**Key Features:**
+- Provides a `FakeTimeProvider` for deterministic time-based testing
+- Registers as both `TimeProvider` (for injection) and `FakeTimeProvider` (for test control)
+- Allows advancing time with `Advance()` and `SetUtcNow()`
+
+**Quick Example:**
+```csharp
+mocker.WithFakeTimeProvider();
+var fakeTime = mocker.Get<FakeTimeProvider>();
+fakeTime.SetUtcNow(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+
+var service = mocker.CreateInstance<MyTimeSensitiveService>();
+fakeTime.Advance(TimeSpan.FromHours(1));
+// Verify behavior at specific time
+```
+
+[Learn more →](SourceGenerators/FakeTimeProviderExtensionGenerator.md)
+
+## Important: Generated Classes Are Internal Partials
+
+All extension classes created by these source generators are generated as **partial classes** with **internal visibility**. For example, the Keyed Services generator produces:
+
+```csharp
+internal static partial class AutoMockerKeyedServicesExtensions
+{
+    // Generated extension methods...
+}
+```
+
+### Ambiguous Reference Issues with Multiple Test Projects
+
+This design can cause **ambiguous method call errors** when multiple test projects reference each other and both have the source generators enabled. Since each project generates its own internal partial class with the same name and methods, projects that share visibility (e.g., via `InternalsVisibleTo` or project references) may see duplicate definitions.
+
+**Example error:**
+```
+The call is ambiguous between the following methods or properties:
+'NSubstitute.AutoMock.AutoMockerKeyedServicesExtensions.WithKeyedService(...)' and
+'NSubstitute.AutoMock.AutoMockerKeyedServicesExtensions.WithKeyedService(...)'
+```
+
+This commonly occurs when:
+- An integration test project references a unit test project
+- `InternalsVisibleTo` is used between test projects
+- Both projects reference `AutoMocker.NSubstitute` and the same packages that trigger generators (e.g., `Microsoft.Extensions.DependencyInjection.Abstractions`)
+
+**Solution:** Disable the source generator in one of the projects (see [Disabling Source Generators](#disabling-source-generators) below).
+
+## Disabling Source Generators
+
+Each source generator can be individually disabled using MSBuild properties in your project's `.csproj` file:
+
+| Generator | MSBuild Property |
+|-----------|-----------------|
+| Options Extension | `EnableAutoMockerNSubstituteOptionsGenerator` |
+| Keyed Services Extension | `EnableAutoMockerNSubstituteKeyedServicesGenerator` |
+| Fake Logging Extension | `EnableAutoMockerNSubstituteFakeLoggingGenerator` |
+| Application Insights Extension | `EnableAutoMockerNSubstituteApplicationInsightsGenerator` |
+| Meter Factory Extension | `EnableAutoMockerNSubstituteMeterFactoryGenerator` |
+| Fake Time Provider Extension | `EnableAutoMockerNSubstituteFakeTimeProviderGenerator` |
+
+**Example: Disabling a generator**
+```xml
+<PropertyGroup>
+  <!-- Disable the Keyed Services generator -->
+  <EnableAutoMockerNSubstituteKeyedServicesGenerator>false</EnableAutoMockerNSubstituteKeyedServicesGenerator>
+</PropertyGroup>
+```
+
+**Example: Disabling multiple generators**
+```xml
+<PropertyGroup>
+  <EnableAutoMockerNSubstituteKeyedServicesGenerator>false</EnableAutoMockerNSubstituteKeyedServicesGenerator>
+  <EnableAutoMockerNSubstituteOptionsGenerator>false</EnableAutoMockerNSubstituteOptionsGenerator>
+</PropertyGroup>
+```
+
+## Tips and Best Practices
+
+### Review Generated Code
+
+To see the generated code, enable source generators output in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+</PropertyGroup>
+```
+
+## See Also
+
+- [Project README](../README.md)
+- [Moq.AutoMocker Source Generators](https://github.com/moq/Moq.AutoMocker/blob/master/docs/SourceGenerators.md) — the project these generators were ported from
