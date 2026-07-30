@@ -1,4 +1,6 @@
-﻿# AutoMocker.NSubstitute
+# AutoMocker.NSubstitute
+
+[![Nuget](https://img.shields.io/nuget/v/AutoMocker.NSubstitute.svg)](https://www.nuget.org/packages/AutoMocker.NSubstitute)
 
 An auto-mocking container for [NSubstitute](https://nsubstitute.github.io/) — the NSubstitute flavor of [Moq.AutoMocker](https://github.com/moq/Moq.AutoMocker).
 
@@ -61,9 +63,3 @@ The package ships with source generators (ported from Moq.AutoMocker) that light
 Each generator can be disabled with an MSBuild property, e.g. `<EnableAutoMockerNSubstituteOptionsGenerator>false</EnableAutoMockerNSubstituteOptionsGenerator>`.
 
 See the [source generator docs](docs/SourceGenerators.md) for detailed usage, examples, and troubleshooting for each generator.
-
-## Differences from Moq.AutoMock
-
-NSubstitute has no `Mock<T>` wrapper, behaviors, or setup expressions, so this package intentionally omits the Moq-specific APIs
-(`Setup`, `Verify`, `MockBehavior`, `DefaultValue`, etc.). Configure and verify substitutes directly using standard NSubstitute syntax
-on the objects returned from `GetSubstitute<T>()`.
