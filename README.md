@@ -1,6 +1,6 @@
-# AutoMocker.NSubstitute
+# <img src="https://raw.githubusercontent.com/Keboo/AutoMocker.NSubstitute/main/AutoMocker.NSubstitute/NuGetIcon.png" alt="NuGet" width="32" height="32" /> AutoMocker.NSubstitute
 
-[![Nuget](https://img.shields.io/nuget/v/AutoMocker.NSubstitute.svg)](https://www.nuget.org/packages/AutoMocker.NSubstitute)
+[![NuGet](https://img.shields.io/nuget/v/AutoMocker.NSubstitute.svg?logo=nuget)](https://www.nuget.org/packages/AutoMocker.NSubstitute)
 
 An auto-mocking container for [NSubstitute](https://nsubstitute.github.io/) — the NSubstitute flavor of [Moq.AutoMocker](https://github.com/moq/Moq.AutoMocker).
 
