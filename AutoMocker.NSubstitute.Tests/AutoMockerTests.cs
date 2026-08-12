@@ -346,4 +346,42 @@ public class AutoMockerTests
 
         Assert.ThrowsExactly<InvalidOperationException>(() => mocker.Use<IService2>(service));
     }
+
+    [TestMethod]
+    public void Use_DistinctInstancesThatAreValueEqual_DoesNotThrow()
+    {
+        // Types like Uri override Equals to perform value equality, so two
+        // *different* instances that happen to represent the same value
+        // should not be treated as "the same instance already added".
+        AutoMocker mocker = new();
+        Uri uri1 = new("relative", UriKind.Relative);
+        Uri uri2 = new("relative", UriKind.Relative);
+        Assert.AreNotSame(uri1, uri2);
+        Assert.AreEqual(uri1, uri2);
+
+        mocker.Use(uri1);
+        mocker.Use(uri2);
+
+        Assert.AreSame(uri2, mocker.Get<Uri>());
+    }
+
+    [TestMethod]
+    public void Use_DistinctRecordInstancesThatAreValueEqual_DoesNotThrow()
+    {
+        // Records generate value-based Equals overrides, so two distinct
+        // record instances with the same property values should not be
+        // treated as "the same instance already added".
+        AutoMocker mocker = new();
+        ExampleRecord record1 = new("value");
+        ExampleRecord record2 = new("value");
+        Assert.AreNotSame(record1, record2);
+        Assert.AreEqual(record1, record2);
+
+        mocker.Use(record1);
+        mocker.Use(record2);
+
+        Assert.AreSame(record2, mocker.Get<ExampleRecord>());
+    }
+
+    private record ExampleRecord(string Value);
 }
