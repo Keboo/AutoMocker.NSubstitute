@@ -6,7 +6,7 @@
     <RootNamespace>NSubstitute.AutoMock</RootNamespace>
     <NeutralLanguage>en-US</NeutralLanguage>
 
-    <PackageVersion>0.0.1</PackageVersion>
+    <PackageVersion>1.0.0</PackageVersion>
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);AMG0002</NoWarn>
