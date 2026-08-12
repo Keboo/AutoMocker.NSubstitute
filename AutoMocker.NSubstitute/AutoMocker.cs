@@ -330,7 +330,7 @@ public partial class AutoMocker : IServiceProvider
         WithTypeMap(typeMap =>
         {
             if (typeMap.TryGetValue(type, out IInstance existingInstance) &&
-                Equals(existingInstance.Value, service))
+                ReferenceEquals(existingInstance.Value, service))
             {
                 throw new InvalidOperationException($"The service instance has already been added. You can safely remove this call to {nameof(AutoMocker)}.{nameof(Use)}");
             }
