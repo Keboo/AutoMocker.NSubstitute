@@ -21,6 +21,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Supports exact versions (e.g. "5.3.0"), major wildcards (e.g. "6.*"),
+        # and major.minor wildcards (e.g. "6.2.*") - these are resolved to the
+        # latest matching stable version in the "Resolve NSubstitute version" step.
         nsubstitute-version: [ "5.3.0", "6.*" ]
 
     steps:
@@ -35,11 +38,11 @@ jobs:
         id: nsubstitute
         run: |
           $requested = "${{ matrix.nsubstitute-version }}"
-          if ($requested -match '^(\d+)\.\*$') {
-            $major = $matches[1]
+          if ($requested -match '^(\d+)(\.\d+)?\.\*$') {
+            $prefix = "$($matches[1])$($matches[2])"
             $index = Invoke-RestMethod -Uri "https://api.nuget.org/v3-flatcontainer/nsubstitute/index.json"
             $resolved = $index.versions |
-              Where-Object { $_ -match "^$major\." -and $_ -notmatch '-' } |
+              Where-Object { $_ -match "^$([regex]::Escape($prefix))\." -and $_ -notmatch '-' } |
               Sort-Object { [version]($_ -replace '-.*$') } |
               Select-Object -Last 1
             if (-not $resolved) {
