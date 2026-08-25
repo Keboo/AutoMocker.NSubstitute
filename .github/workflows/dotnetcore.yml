@@ -18,6 +18,51 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: dotnet restore
+        run: dotnet restore
+
+      - name: dotnet build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: dotnet test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: dotnet pack
+        run: dotnet pack --configuration Release --no-build -o ./NuGet
+
+      # Test that MSBuild properties to disable generators work correctly
+      - name: Test Generator Disable Properties
+        run: |
+          <# Create a local NuGet source directory with the packed packages #>
+          New-Item -ItemType Directory -Force -Path ./nupkgs
+          Copy-Item -Path ./NuGet/*.nupkg -Destination ./nupkgs/
+
+          <# Build and run the disable tests using the local NuGet package #>
+          <# The test project's NuGet.config points to ../../nupkgs relative to the project #>
+          dotnet test --project ./GeneratorTests/AutoMocker.NSubstitute.Generator.DisableTests/AutoMocker.NSubstitute.Generator.DisableTests.csproj `
+            --configuration Release `
+            --verbosity normal `
+            /p:LocalNuGetSource=true
+
+      - name: Upload NuGet artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: NuGet
+          path: ./NuGet
+          if-no-files-found: error
+
+  test-nsubstitute-versions:
+    runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -63,36 +108,9 @@ jobs:
       - name: dotnet test
         run: dotnet test --configuration Release --no-build --verbosity normal /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
 
-      - name: dotnet pack
-        if: matrix.nsubstitute-version == '5.3.0'
-        run: dotnet pack --configuration Release --no-build -o ./NuGet
-
-      # Test that MSBuild properties to disable generators work correctly
-      - name: Test Generator Disable Properties
-        if: matrix.nsubstitute-version == '5.3.0'
-        run: |
-          <# Create a local NuGet source directory with the packed packages #>
-          New-Item -ItemType Directory -Force -Path ./nupkgs
-          Copy-Item -Path ./NuGet/*.nupkg -Destination ./nupkgs/
-
-          <# Build and run the disable tests using the local NuGet package #>
-          <# The test project's NuGet.config points to ../../nupkgs relative to the project #>
-          dotnet test --project ./GeneratorTests/AutoMocker.NSubstitute.Generator.DisableTests/AutoMocker.NSubstitute.Generator.DisableTests.csproj `
-            --configuration Release `
-            --verbosity normal `
-            /p:LocalNuGetSource=true
-
-      - name: Upload NuGet artifact
-        if: github.event_name != 'pull_request' && matrix.nsubstitute-version == '5.3.0'
-        uses: actions/upload-artifact@v7
-        with:
-          name: NuGet
-          path: ./NuGet
-          if-no-files-found: error
-
   automerge:
     if: github.event_name == 'pull_request'
-    needs: build
+    needs: [ build, test-nsubstitute-versions ]
     runs-on: ubuntu-latest
 
     permissions:
@@ -104,7 +122,7 @@ jobs:
 
   deploy-nuget:
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: [ build, test-nsubstitute-versions ]
     runs-on: ubuntu-latest
 
     # Required for NuGet trusted publishing through GitHub OIDC.
