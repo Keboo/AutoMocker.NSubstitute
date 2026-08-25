@@ -66,10 +66,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Supports exact versions (e.g. "5.3.0"), major wildcards (e.g. "6.*"),
-        # and major.minor wildcards (e.g. "6.2.*") - these are resolved to the
+        # 5.3.0 is already covered by the "build" job above, so only the
+        # newer major version needs to be verified here. Supports exact
+        # versions (e.g. "6.2.0"), major wildcards (e.g. "6.*"), and
+        # major.minor wildcards (e.g. "6.2.*") - these are resolved to the
         # latest matching stable version in the "Resolve NSubstitute version" step.
-        nsubstitute-version: [ "5.3.0", "6.*" ]
+        nsubstitute-version: [ "6.*" ]
 
     steps:
       - uses: actions/checkout@v7
