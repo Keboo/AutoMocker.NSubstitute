@@ -42,6 +42,8 @@ public partial class AutoMocker : IServiceProvider
             new LazyResolver(),
             new FuncResolver(),
             new CancellationTokenResolver(),
+            new HttpMessageHandlerWrapperResolver(),
+            new HttpClientResolver(),
             new SubstituteResolver(callBase)
         ];
     }

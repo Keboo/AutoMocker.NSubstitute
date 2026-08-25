@@ -47,6 +47,22 @@ mocker.GetSubstitute<IEngineProvider>().Received(1).GetEngine();
 - `AsDisposable()` — dispose all disposable instances tracked by the container.
 - Implements `IServiceProvider`.
 
+## HttpClient support
+
+Classes that depend on `HttpClient` are automatically resolved with a substituted `HttpMessageHandler`, returning HTTP 200 OK by default. Verb-specific helpers make setup and verification concise:
+
+```csharp
+mocker.SetupHttpGet("/users")
+    .ReturnsHttpResponse(HttpStatusCode.OK, """{"users": []}""");
+
+var service = mocker.CreateInstance<UserService>();
+var response = await service.GetUsersAsync();
+
+mocker.VerifyHttpGet("/users", requiredNumberOfCalls: 1);
+```
+
+See [docs/HttpClient.md](docs/HttpClient.md) for full details.
+
 ## Source generators
 
 The package ships with source generators (ported from Moq.AutoMocker) that light up automatically:
