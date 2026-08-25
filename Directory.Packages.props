@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- https://learn.microsoft.com/nuget/consume-packages/Central-Package-Management?WT.mc_id=DT-MVP-5003472#transitive-pinning -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!-- Allows CI to override the NSubstitute version under test, e.g. -p:NSubstituteVersion=6.2.0 -->
+    <NSubstituteVersion Condition="'$(NSubstituteVersion)' == ''">5.3.0</NSubstituteVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
@@ -19,7 +21,7 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
     <PackageVersion Include="MSTest" Version="4.3.3" />
     <PackageVersion Include="NonBlocking" Version="2.1.2" />
-    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <PackageVersion Include="NSubstitute" Version="$(NSubstituteVersion)" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="OpenTelemetry.Api" Version="1.16.0" />

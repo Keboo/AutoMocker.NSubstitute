@@ -60,9 +60,57 @@ jobs:
           path: ./NuGet
           if-no-files-found: error
 
+  test-nsubstitute-versions:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Supports exact versions (e.g. "5.3.0"), major wildcards (e.g. "6.*"),
+        # and major.minor wildcards (e.g. "6.2.*") - these are resolved to the
+        # latest matching stable version in the "Resolve NSubstitute version" step.
+        nsubstitute-version: [ "5.3.0", "6.*" ]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Resolve NSubstitute version
+        id: nsubstitute
+        run: |
+          $requested = "${{ matrix.nsubstitute-version }}"
+          if ($requested -match '^(\d+)(\.\d+)?\.\*$') {
+            $prefix = "$($matches[1])$($matches[2])"
+            $index = Invoke-RestMethod -Uri "https://api.nuget.org/v3-flatcontainer/nsubstitute/index.json"
+            $resolved = $index.versions |
+              Where-Object { $_ -match "^$([regex]::Escape($prefix))\." -and $_ -notmatch '-' } |
+              Sort-Object { [version]($_ -replace '-.*$') } |
+              Select-Object -Last 1
+            if (-not $resolved) {
+              throw "Unable to resolve a version for NSubstitute matching '$requested'"
+            }
+            Write-Host "Resolved '$requested' to NSubstitute $resolved"
+            "version=$resolved" >> $env:GITHUB_OUTPUT
+          } else {
+            "version=$requested" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: dotnet restore
+        run: dotnet restore /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
+
+      - name: dotnet build
+        run: dotnet build --configuration Release --no-restore /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
+
+      - name: dotnet test
+        run: dotnet test --configuration Release --no-build --verbosity normal /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
+
   automerge:
     if: github.event_name == 'pull_request'
-    needs: build
+    needs: [ build, test-nsubstitute-versions ]
     runs-on: ubuntu-latest
 
     permissions:
@@ -74,7 +122,7 @@ jobs:
 
   deploy-nuget:
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: [ build, test-nsubstitute-versions ]
     runs-on: ubuntu-latest
 
     # Required for NuGet trusted publishing through GitHub OIDC.
