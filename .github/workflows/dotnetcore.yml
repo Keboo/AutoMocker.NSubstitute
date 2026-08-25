@@ -31,14 +31,34 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Resolve NSubstitute version
+        id: nsubstitute
+        run: |
+          $requested = "${{ matrix.nsubstitute-version }}"
+          if ($requested -match '^(\d+)\.\*$') {
+            $major = $matches[1]
+            $index = Invoke-RestMethod -Uri "https://api.nuget.org/v3-flatcontainer/nsubstitute/index.json"
+            $resolved = $index.versions |
+              Where-Object { $_ -match "^$major\." -and $_ -notmatch '-' } |
+              Sort-Object { [version]($_ -replace '-.*$') } |
+              Select-Object -Last 1
+            if (-not $resolved) {
+              throw "Unable to resolve a version for NSubstitute matching '$requested'"
+            }
+            Write-Host "Resolved '$requested' to NSubstitute $resolved"
+            "version=$resolved" >> $env:GITHUB_OUTPUT
+          } else {
+            "version=$requested" >> $env:GITHUB_OUTPUT
+          }
+
       - name: dotnet restore
-        run: dotnet restore /p:NSubstituteVersion=${{ matrix.nsubstitute-version }}
+        run: dotnet restore /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
 
       - name: dotnet build
-        run: dotnet build --configuration Release --no-restore /p:NSubstituteVersion=${{ matrix.nsubstitute-version }}
+        run: dotnet build --configuration Release --no-restore /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
 
       - name: dotnet test
-        run: dotnet test --configuration Release --no-build --verbosity normal /p:NSubstituteVersion=${{ matrix.nsubstitute-version }}
+        run: dotnet test --configuration Release --no-build --verbosity normal /p:NSubstituteVersion=${{ steps.nsubstitute.outputs.version }}
 
       - name: dotnet pack
         if: matrix.nsubstitute-version == '5.3.0'
