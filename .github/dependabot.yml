@@ -12,6 +12,7 @@ updates:
     ignore:
       - dependency-name: "Microsoft.CodeAnalysis.Common"
       - dependency-name: "Microsoft.CodeAnalysis.CSharp"
+      - dependency-name: "NSubstitute"
 
   - package-ecosystem: "github-actions" # See documentation for possible values
     directory: "/" # Location of package manifests
