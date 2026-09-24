@@ -75,6 +75,7 @@ The package ships with source generators (ported from Moq.AutoMocker) that light
 - **`WithKeyedService(...)`** — generated when `Microsoft.Extensions.DependencyInjection.Abstractions` 8+ is referenced.
 - **`WithMeterFactory()`** — generated when `System.Diagnostics.DiagnosticSource` 10+ is referenced.
 - **`WithApplicationInsights()`** — generated when `Microsoft.ApplicationInsights` is referenced.
+- **`WithHttpClientFactory()`** — generated when `Microsoft.Extensions.Http` is referenced; resolves `IHttpClientFactory` with a testable `HttpClient` cached per client name.
 
 Each generator can be disabled with an MSBuild property, e.g. `<EnableAutoMockerNSubstituteOptionsGenerator>false</EnableAutoMockerNSubstituteOptionsGenerator>`.
 
