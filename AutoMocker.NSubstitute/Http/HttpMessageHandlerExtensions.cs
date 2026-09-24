@@ -165,6 +165,52 @@ public static partial class HttpMessageHandlerExtensions
         => SetupHttp(handler, HttpMethod.Put, match);
 
     /// <summary>
+    /// Configures a call for a PATCH request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
+    /// specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="requestUri">A substring to match against the request URI.</param>
+    /// <param name="content">Optional request content to match.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this AutoMocker mocker, string? requestUri = null, string? content = null)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(requestUri, content);
+    }
+
+    /// <summary>
+    /// Configures a call for a PATCH request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
+    /// specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this AutoMocker mocker, Func<HttpRequestMessage, bool> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(match);
+    }
+
+    /// <summary>
+    /// Configures a call for a PATCH request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
+    /// specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="requestUri">A substring to match against the request URI.</param>
+    /// <param name="content">Optional request content to match.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this HttpMessageHandlerWrapper handler, string? requestUri = null, string? content = null)
+        => handler.SetupHttpPatch(r => MatchesRequestUri(r.RequestUri, requestUri) && ContentEquals(r.Content, content));
+
+    /// <summary>
+    /// Configures a call for a PATCH request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
+    /// specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, new HttpMethod("PATCH"), match);
+
+    /// <summary>
     /// Configures a call for a DELETE request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -328,6 +374,21 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Verifies that a PATCH request matching the given URI and content was made.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="requestUri">A substring to match against the request URI.</param>
+    /// <param name="content">Optional request content to match.</param>
+    /// <param name="requiredNumberOfCalls">The number of times the request is expected to have been made. Defaults to at least once.</param>
+    public static void VerifyHttpPatch(this AutoMocker mocker, string? requestUri = null, string? content = null, int? requiredNumberOfCalls = null)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(new HttpMethod("PATCH"),
+            r => MatchesRequestUri(r.RequestUri, requestUri) && ContentEquals(r.Content, content), requiredNumberOfCalls);
+    }
+
+    /// <summary>
     /// Verifies that a DELETE request matching the given URI was made.
     /// </summary>
     /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
@@ -353,8 +414,22 @@ public static partial class HttpMessageHandlerExtensions
         mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Head, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
     }
 
-    private static void VerifyHttp(this HttpMessageHandlerWrapper handler, HttpMethod method, Func<HttpRequestMessage, bool> match, int? requiredNumberOfCalls)
+    /// <summary>
+    /// Verifies that a request using the specified HTTP method matches the supplied predicate.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="method">The HTTP method to verify.</param>
+    /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    /// <param name="requiredNumberOfCalls">The number of times the request is expected to have been made. Defaults to at least once.</param>
+    public static void VerifyHttp(this HttpMessageHandlerWrapper handler, HttpMethod method, Func<HttpRequestMessage, bool> match, int? requiredNumberOfCalls = null)
     {
+        if (handler is null)
+            throw new ArgumentNullException(nameof(handler));
+        if (method is null)
+            throw new ArgumentNullException(nameof(method));
+        if (match is null)
+            throw new ArgumentNullException(nameof(match));
+
         var received = requiredNumberOfCalls is { } n ? handler.Received(n) : handler.Received();
         received.SendAsyncPublic(Arg.Is<HttpRequestMessage>(r => r.Method == method && match(r)), Arg.Any<CancellationToken>());
     }
