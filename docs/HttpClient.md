@@ -5,7 +5,8 @@ AutoMocker.NSubstitute provides built-in support for testing code that depends o
 ## Features
 
 - **Automatic resolution** of `HttpClient` dependencies via `HttpClientResolver`
-- **Verb-specific setup methods** for GET, POST, PUT, DELETE, and HEAD
+- **Named `IHttpClientFactory` support** with one testable client cached per client name
+- **Verb-specific setup methods** for GET, POST, PUT, PATCH, DELETE, and HEAD
 - **Flexible request matching** by URI substring or a predicate
 - **Fluent response builders** for string, byte array, stream, and custom content types
 - **Verification helpers** built on NSubstitute's `Received()` to assert that specific HTTP requests were made
@@ -23,6 +24,22 @@ NSubstitute has no equivalent of Moq's `.Protected()` API, so it cannot configur
 3. Wraps the handler in a new `HttpClient` instance
 
 This means you can immediately create and test classes that use `HttpClient` without any explicit setup. The extension methods on `AutoMocker` and `HttpMessageHandlerWrapper` then let you customize request matching and response behavior using standard NSubstitute syntax.
+
+When the consuming project references `Microsoft.Extensions.Http`, the source generator adds `WithHttpClientFactory()`. Call this generated extension to enable testable `IHttpClientFactory` resolution. Calling `CreateClient` with the same name returns the same `HttpClient` instance; different names receive separate instances. All named clients use the same testable handler, so the existing setup and verification helpers apply:
+
+```csharp
+var mocker = new AutoMocker()
+    .WithHttpClientFactory();
+var factory = mocker.Get<IHttpClientFactory>();
+var catalogClient = factory.CreateClient("catalog");
+var sameCatalogClient = factory.CreateClient("catalog");
+var ordersClient = factory.CreateClient("orders");
+
+Assert.AreSame(catalogClient, sameCatalogClient);
+Assert.AreNotSame(catalogClient, ordersClient);
+```
+
+See the [HTTP Client Factory Extension Generator](SourceGenerators/HttpClientFactoryExtensionGenerator.md) page for advanced usage and details on disabling this generator via the `EnableAutoMockerNSubstituteHttpClientFactoryGenerator` MSBuild property.
 
 ## Usage
 
@@ -63,6 +80,9 @@ mocker.SetupHttpPost("/orders", "order data")
     .ReturnsHttpResponse(HttpStatusCode.Created, """{"id": 1}""");
 
 mocker.SetupHttpPut("/users/1", "updated data")
+    .ReturnsHttpResponse(HttpStatusCode.OK, """{"updated": true}""");
+
+mocker.SetupHttpPatch("/users/1", "partial update")
     .ReturnsHttpResponse(HttpStatusCode.OK, """{"updated": true}""");
 
 mocker.SetupHttpDelete("/users/1")
@@ -173,8 +193,9 @@ mocker.VerifyHttpGet("https://example.com/api/status", requiredNumberOfCalls: 1)
 // Verify a POST with specific content
 mocker.VerifyHttpPost("https://example.com/api/notify", "Hello", requiredNumberOfCalls: 1);
 
-// Verify PUT, DELETE, HEAD
+// Verify PUT, PATCH, DELETE, HEAD
 mocker.VerifyHttpPut("https://example.com/api/config", "new value", requiredNumberOfCalls: 1);
+mocker.VerifyHttpPatch("https://example.com/api/config", "partial value", requiredNumberOfCalls: 1);
 mocker.VerifyHttpDelete("https://example.com/api/cache", requiredNumberOfCalls: 1);
 mocker.VerifyHttpHead("https://example.com/api/health", requiredNumberOfCalls: 1);
 ```
@@ -202,6 +223,15 @@ await handler.Received(1).SendAsyncPublic(
     Arg.Any<CancellationToken>());
 ```
 
+The handler also exposes `VerifyHttp` for reusable method and predicate matching:
+
+```csharp
+handler.VerifyHttp(
+    HttpMethod.Get,
+    request => request.RequestUri!.AbsoluteUri.EndsWith("/people"),
+    requiredNumberOfCalls: 1);
+```
+
 ## API Reference
 
 ### Setup Methods
@@ -216,6 +246,8 @@ All setup methods are available as extension methods on both `AutoMocker` and `H
 | `SetupHttpPost(Func<HttpRequestMessage, bool>)` | Setup POST requests matching a predicate |
 | `SetupHttpPut(string?, string?)` | Setup PUT requests with optional URL and content matching |
 | `SetupHttpPut(Func<HttpRequestMessage, bool>)` | Setup PUT requests matching a predicate |
+| `SetupHttpPatch(string?, string?)` | Setup PATCH requests with optional URL and content matching |
+| `SetupHttpPatch(Func<HttpRequestMessage, bool>)` | Setup PATCH requests matching a predicate |
 | `SetupHttpDelete(string?)` | Setup DELETE requests, optionally matching a URL substring |
 | `SetupHttpDelete(Func<HttpRequestMessage, bool>)` | Setup DELETE requests matching a predicate |
 | `SetupHttpHead(string?)` | Setup HEAD requests, optionally matching a URL substring |
@@ -244,8 +276,10 @@ All response methods accept an optional `Action<HttpResponseMessage>? configure`
 | `VerifyHttpGet(string?, int?)` | Verify GET requests to a URL |
 | `VerifyHttpPost(string?, string?, int?)` | Verify POST requests with optional content |
 | `VerifyHttpPut(string?, string?, int?)` | Verify PUT requests with optional content |
+| `VerifyHttpPatch(string?, string?, int?)` | Verify PATCH requests with optional content |
 | `VerifyHttpDelete(string?, int?)` | Verify DELETE requests to a URL |
 | `VerifyHttpHead(string?, int?)` | Verify HEAD requests to a URL |
+| `VerifyHttp(HttpMethod, Func<HttpRequestMessage, bool>, int?)` | Verify requests using a method and predicate |
 
 `requiredNumberOfCalls` defaults to at least once (NSubstitute's `Received()` with no count) when omitted.
 

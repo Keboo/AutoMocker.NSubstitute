@@ -13,6 +13,7 @@
     <EnableAutoMockerNSubstituteFakeLoggingGenerator>false</EnableAutoMockerNSubstituteFakeLoggingGenerator>
     <EnableAutoMockerNSubstituteApplicationInsightsGenerator>false</EnableAutoMockerNSubstituteApplicationInsightsGenerator>
     <EnableAutoMockerNSubstituteFakeTimeProviderGenerator>false</EnableAutoMockerNSubstituteFakeTimeProviderGenerator>
+    <EnableAutoMockerNSubstituteHttpClientFactoryGenerator>false</EnableAutoMockerNSubstituteHttpClientFactoryGenerator>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.ApplicationInsights" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -59,6 +61,7 @@
     <CompilerVisibleProperty Include="EnableAutoMockerNSubstituteFakeLoggingGenerator" />
     <CompilerVisibleProperty Include="EnableAutoMockerNSubstituteApplicationInsightsGenerator" />
     <CompilerVisibleProperty Include="EnableAutoMockerNSubstituteFakeTimeProviderGenerator" />
+    <CompilerVisibleProperty Include="EnableAutoMockerNSubstituteHttpClientFactoryGenerator" />
   </ItemGroup>
 
 </Project>
