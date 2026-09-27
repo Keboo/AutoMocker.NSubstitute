@@ -80,3 +80,6 @@ The package ships with source generators (ported from Moq.AutoMocker) that light
 Each generator can be disabled with an MSBuild property, e.g. `<EnableAutoMockerNSubstituteOptionsGenerator>false</EnableAutoMockerNSubstituteOptionsGenerator>`.
 
 See the [source generator docs](docs/SourceGenerators.md) for detailed usage, examples, and troubleshooting for each generator.
+
+For a comparison between AutoMocker conveniences and native NSubstitute interactions,
+see [NSubstitute usage in AutoMocker.NSubstitute](docs/NSubstituteUsage.md).

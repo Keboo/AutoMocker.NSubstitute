@@ -82,3 +82,7 @@ See [docs/HttpClient.md](../docs/HttpClient.md) for full details.
 NSubstitute has no `Mock<T>` wrapper, behaviors, or setup expressions, so this package intentionally omits the Moq-specific APIs
 (`Setup`, `Verify`, `MockBehavior`, `DefaultValue`, etc.). Configure and verify substitutes directly using standard NSubstitute syntax
 on the objects returned from `GetSubstitute<T>()`.
+
+For details on which interactions are native NSubstitute behavior and which are
+AutoMocker or HTTP convenience APIs, see
+[NSubstitute usage in AutoMocker.NSubstitute](../docs/NSubstituteUsage.md).
