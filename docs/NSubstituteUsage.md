@@ -10,9 +10,11 @@ The following interactions are the same as they are with a substitute created di
 with `Substitute.For<T>()`:
 
 ```csharp
-var dependency = mocker.GetSubstitute<IEngineProvider>();
+var dependency = Substitute.For<IEngineProvider>();
+mocker.Use(dependency);
 
 dependency.GetEngine().Returns(new Engine());
+_ = dependency.GetEngine();
 dependency.Received(1).GetEngine();
 dependency.DidNotReceive().Reset();
 ```
@@ -27,9 +29,8 @@ dependency.Received().Load(Arg.Is<string>(name => name.StartsWith("test-")));
 ```
 
 As with NSubstitute itself, if one argument in a call uses an argument matcher, use
-matchers for the other arguments in that call as well. `Returns`, `Received`,
-`DidNotReceive`, callbacks, and call inspection all operate on the substitute returned
-by `GetSubstitute<T>()`.
+matchers for the other arguments in that call as well. `Returns`, `Received`, `DidNotReceive`, callbacks, and call inspection all operate on
+the substitute instance directly.
 
 ## AutoMocker interactions
 
@@ -39,13 +40,14 @@ NSubstitute's substitute API.
 | AutoMocker call | Purpose | Difference from direct NSubstitute |
 | --- | --- | --- |
 | `CreateInstance<T>()` | Construct the system under test and resolve its constructor dependencies | Creates substitutes automatically instead of requiring each `Substitute.For<T>()` call |
-| `GetSubstitute<T>()` | Retrieve the substitute registered for a service | Retrieves a container-owned substitute; it is not a `Mock<T>` wrapper |
+| `GetOrCreateSubstitute<T>()` | Retrieve the substitute registered for a service, or create it if absent | Makes substitute creation an explicit container operation; it is not a `Mock<T>` wrapper |
+| `GetSubstitute<T>()` | Compatibility alias for `GetOrCreateSubstitute<T>()` | Retained for existing callers; prefer the explicit `GetOrCreateSubstitute<T>()` name in new code |
 | `Use<T>(value)` | Register a real object or an existing substitute | Replaces the value resolved for that service |
 | `With<TService, TImplementation>()` | Create and register a real implementation | Uses the container to construct the implementation |
 | `Combine(...)` | Register one substitute for multiple service types | Creates a new multi-type substitute and replaces cached values for those types |
 
-`GetSubstitute<T>()` only succeeds when the registered value is an NSubstitute
-substitute. If a real instance was supplied with `Use`, retrieve it with `Get<T>()`
+`GetOrCreateSubstitute<T>()` only returns an NSubstitute substitute. If a real
+instance was supplied with `Use`, retrieve it with `Get<T>()`
 instead. This keeps the distinction between a real dependency and a substitute
 explicit:
 
@@ -55,13 +57,13 @@ mocker.Use<IClock>(realClock);
 
 Assert.Same(realClock, mocker.Get<IClock>());
 // Throws: IClock is registered as a real instance, not a substitute.
-// mocker.GetSubstitute<IClock>();
+// mocker.GetOrCreateSubstitute<IClock>();
 ```
 
 When an interface or mockable class has not been registered, requesting it with
-`GetSubstitute<T>()` creates and caches a substitute. This is a container convenience;
-it does not change how that substitute handles calls, return values, or received-call
-assertions.
+`GetOrCreateSubstitute<T>()` creates and caches a substitute. This is a container
+convenience; it does not change how that substitute handles calls, return values, or
+received-call assertions.
 
 ## Partial substitutes and `CallBase`
 
@@ -85,7 +87,7 @@ methods. They adapt the protected `HttpMessageHandler.SendAsync` call to the pub
 For complete control, use the wrapper directly:
 
 ```csharp
-var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+var handler = mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>();
 
 handler.SendAsyncPublic(
         Arg.Any<HttpRequestMessage>(),
@@ -103,6 +105,7 @@ separately; an unconfigured HTTP call does not fail merely because no setup exis
 
 ## Practical rule
 
-Use `AutoMocker` to assemble the object graph and register real values. Use
-NSubstitute directly on the object returned by `GetSubstitute<T>()` for behavior
-configuration and interaction assertions.
+Use `Substitute.For<T>()` and `Use(...)` when you want to follow NSubstitute's explicit
+create/configure/register flow. Use `AutoMocker` to assemble the object graph and
+`GetOrCreateSubstitute<T>()` when the container should create and cache the substitute.
+Configure and assert on the returned substitute using the normal NSubstitute API.

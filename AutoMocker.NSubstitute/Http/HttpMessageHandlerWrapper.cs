@@ -8,7 +8,7 @@ namespace NSubstitute.AutoMock.Http;
 /// </summary>
 /// <remarks>
 /// Unlike Moq, NSubstitute has no mechanism for configuring or verifying protected members.
-/// Substituting this wrapper class (e.g. via <see cref="AutoMocker.GetSubstitute{TService}()" />)
+/// Substituting this wrapper class (e.g. via <see cref="AutoMocker.GetOrCreateSubstitute{TService}()" />)
 /// allows tests to configure <see cref="SendAsyncPublic" /> using standard NSubstitute syntax
 /// such as <c>Returns</c> and <c>Received</c>.
 /// </remarks>

@@ -13,7 +13,7 @@ public class HttpClientResolver : SimpleTypeResolver<HttpClient>
     /// <inheritdoc />
     protected override HttpClient GetValue(SubstituteResolutionContext context)
     {
-        var handler = context.AutoMocker.GetSubstitute<HttpMessageHandlerWrapper>();
+        var handler = context.AutoMocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>();
         return new HttpClient(handler, disposeHandler: false);
     }
 }

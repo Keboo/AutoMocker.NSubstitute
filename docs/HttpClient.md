@@ -19,7 +19,7 @@ NSubstitute has no equivalent of Moq's `.Protected()` API, so it cannot configur
 
 `HttpClientResolver` intercepts `HttpClient` dependencies. When `CreateInstance<T>()` encounters an `HttpClient` parameter, the resolver:
 
-1. Creates (or retrieves) the `HttpMessageHandlerWrapper` substitute via `GetSubstitute<HttpMessageHandlerWrapper>()`
+1. Creates (or retrieves) the `HttpMessageHandlerWrapper` substitute via `GetOrCreateSubstitute<HttpMessageHandlerWrapper>()`
 2. Configures a default response of HTTP 200 OK with empty content for any request
 3. Wraps the handler in a new `HttpClient` instance
 
@@ -205,7 +205,7 @@ mocker.VerifyHttpHead("https://example.com/api/health", requiredNumberOfCalls: 1
 For advanced scenarios, retrieve the `HttpMessageHandlerWrapper` substitute directly and use plain NSubstitute syntax:
 
 ```csharp
-var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+var handler = mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>();
 
 // Setup directly
 handler.SendAsyncPublic(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())

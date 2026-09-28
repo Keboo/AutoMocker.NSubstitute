@@ -38,7 +38,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpGet(requestUri);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpGet(requestUri);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpGet(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpGet(match);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPost(requestUri, content);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPost(requestUri, content);
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPost(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPost(match);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPut(requestUri, content);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPut(requestUri, content);
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPut(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPut(match);
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(requestUri, content);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(requestUri, content);
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(match);
     }
 
     /// <summary>
@@ -220,7 +220,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpDelete(requestUri);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpDelete(requestUri);
     }
 
     /// <summary>
@@ -233,7 +233,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpDelete(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpDelete(match);
     }
 
     /// <summary>
@@ -264,7 +264,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpHead(requestUri);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpHead(requestUri);
     }
 
     /// <summary>
@@ -277,7 +277,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpHead(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttpHead(match);
     }
 
     /// <summary>
@@ -308,7 +308,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttp(match);
+        return mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().SetupHttp(match);
     }
 
     /// <summary>
@@ -340,7 +340,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Get, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Get, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
     }
 
     /// <summary>
@@ -354,7 +354,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Post,
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Post,
             r => MatchesRequestUri(r.RequestUri, requestUri) && ContentEquals(r.Content, content), requiredNumberOfCalls);
     }
 
@@ -369,7 +369,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Put,
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Put,
             r => MatchesRequestUri(r.RequestUri, requestUri) && ContentEquals(r.Content, content), requiredNumberOfCalls);
     }
 
@@ -384,7 +384,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(new HttpMethod("PATCH"),
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(new HttpMethod("PATCH"),
             r => MatchesRequestUri(r.RequestUri, requestUri) && ContentEquals(r.Content, content), requiredNumberOfCalls);
     }
 
@@ -398,7 +398,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Delete, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Delete, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
     }
 
     /// <summary>
@@ -411,7 +411,7 @@ public static partial class HttpMessageHandlerExtensions
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Head, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>().VerifyHttp(HttpMethod.Head, r => MatchesRequestUri(r.RequestUri, requestUri), requiredNumberOfCalls);
     }
 
     /// <summary>

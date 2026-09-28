@@ -47,7 +47,7 @@ public class HttpClientFactoryGeneratorTests
 
                 public HttpClient CreateClient(string name)
                     => _clients.GetOrAdd(name ?? string.Empty, _ =>
-                        new HttpClient(autoMocker.GetSubstitute<HttpMessageHandlerWrapper>(), disposeHandler: false));
+                        new HttpClient(autoMocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>(), disposeHandler: false));
             }
         }
         """;

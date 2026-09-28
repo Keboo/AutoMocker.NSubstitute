@@ -19,27 +19,28 @@ The library types live in the `NSubstitute.AutoMock` namespace.
 ```csharp
 var mocker = new AutoMocker();
 
-// Creates CarFactory with substitutes for all constructor dependencies
-CarFactory carFactory = mocker.CreateInstance<CarFactory>();
-
-// Configure a dependency using regular NSubstitute syntax
-mocker.GetSubstitute<IEngineProvider>()
-    .GetEngine()
-    .Returns(new Engine());
+// Create and configure a substitute with the standard NSubstitute API
+IEngineProvider engineProvider = Substitute.For<IEngineProvider>();
+engineProvider.GetEngine().Returns(new Engine());
+mocker.Use(engineProvider);
 
 // Provide explicit instances when needed
 mocker.Use<IColorPicker>(new RedColorPicker());
 
+// Creates CarFactory with substitutes for all constructor dependencies not explicitly supplied
+CarFactory carFactory = mocker.CreateInstance<CarFactory>();
+
 Car car = carFactory.Create();
 
 // Verify using regular NSubstitute syntax
-mocker.GetSubstitute<IEngineProvider>().Received(1).GetEngine();
+engineProvider.Received(1).GetEngine();
 ```
 
 ## Features
 
 - `CreateInstance<T>()` — constructs `T`, resolving constructor arguments from the container or generating substitutes.
-- `GetSubstitute<T>()` — retrieves (or creates) the substitute used for a service, ready to be configured with `Returns`, `Received`, etc.
+- `GetOrCreateSubstitute<T>()` — retrieves the substitute used for a service or creates it if absent.
+- `GetSubstitute<T>()` — compatibility alias for `GetOrCreateSubstitute<T>()`.
 - `Use(...)` / `With(...)` — register explicit instances, factories, or implementation types.
 - `CreateSelfSubstitute<T>()` / `WithSelfSubstitute<T>()` — partial substitutes (`Substitute.ForPartsOf`) so you can test a class while substituting selected virtual members.
 - `Combine(...)` — one substitute instance registered under multiple service types.

@@ -550,53 +550,51 @@ public partial class AutoMocker : IServiceProvider
 
     #endregion Get
 
-    #region GetSubstitute
+    #region GetOrCreateSubstitute
 
     /// <summary>
-    /// Searches and retrieves the substitute that the container uses for TService.
+    /// Gets the substitute registered for TService, or creates and caches one if none is registered.
     /// </summary>
-    /// <typeparam name="TService">The class or interface to search on</typeparam>
-    /// <exception cref="ArgumentException">if the requested object wasn't a substitute</exception>
-    /// <returns>A substitute of TService</returns>
-    public TService GetSubstitute<TService>() where TService : class
-        => (TService)GetSubstitute(typeof(TService));
+    /// <typeparam name="TService">The class or interface to resolve.</typeparam>
+    /// <returns>The registered or newly created substitute.</returns>
+    public TService GetOrCreateSubstitute<TService>() where TService : class
+        => (TService)GetOrCreateSubstitute(typeof(TService));
 
     /// <summary>
-    /// Searches and retrieves the substitute that the container uses for TService.
+    /// Gets the substitute registered for TService, or creates and caches one if none is registered.
     /// </summary>
-    /// <typeparam name="TService">The class or interface to search on</typeparam>
-    /// <param name="enablePrivate">When true, non-public constructors will also be used to create instances.</param>
-    /// <exception cref="ArgumentException">if the requested object wasn't a substitute</exception>
-    /// <returns>A substitute of TService</returns>
-    public TService GetSubstitute<TService>(bool enablePrivate) where TService : class
-        => (TService)GetSubstitute(typeof(TService), enablePrivate);
+    /// <typeparam name="TService">The class or interface to resolve.</typeparam>
+    /// <param name="enablePrivate">When true, non-public constructors may be used for class substitutes.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public TService GetOrCreateSubstitute<TService>(bool enablePrivate) where TService : class
+        => (TService)GetOrCreateSubstitute(typeof(TService), enablePrivate);
 
     /// <summary>
-    /// Searches and retrieves the substitute that the container uses for serviceType.
+    /// Gets the substitute registered for serviceType, or creates and caches one if none is registered.
     /// </summary>
-    /// <param name="serviceType">The type of service to retrieve</param>
-    /// <returns>A substitute of serviceType</returns>
-    public object GetSubstitute(Type serviceType)
+    /// <param name="serviceType">The type of service to resolve.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public object GetOrCreateSubstitute(Type serviceType)
     {
         if (serviceType is null) throw new ArgumentNullException(nameof(serviceType));
 
-        return GetSubstitute(serviceType, enablePrivate: false);
+        return GetOrCreateSubstitute(serviceType, enablePrivate: false);
     }
 
     /// <summary>
-    /// Searches and retrieves the substitute that the container uses for serviceType.
+    /// Gets the substitute registered for serviceType, or creates and caches one if none is registered.
     /// </summary>
-    /// <param name="serviceType">The type of service to retrieve</param>
-    /// <param name="enablePrivate">When true, non-public constructors will also be used to create instances.</param>
-    /// <returns>A substitute of serviceType</returns>
-    public object GetSubstitute(Type serviceType, bool enablePrivate)
+    /// <param name="serviceType">The type of service to resolve.</param>
+    /// <param name="enablePrivate">When true, non-public constructors may be used for class substitutes.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public object GetOrCreateSubstitute(Type serviceType, bool enablePrivate)
     {
         if (serviceType is null) throw new ArgumentNullException(nameof(serviceType));
 
-        return GetSubstituteImplementation(serviceType, enablePrivate);
+        return GetOrCreateSubstituteImplementation(serviceType, enablePrivate);
     }
 
-    private object GetSubstituteImplementation(Type serviceType, bool enablePrivate)
+    private object GetOrCreateSubstituteImplementation(Type serviceType, bool enablePrivate)
     {
         if (TryResolve(serviceType, new ObjectGraphContext(enablePrivate, isSubstituteCreation: true), out IInstance? instance, out bool noCache) &&
             instance.IsSubstitute)
@@ -610,7 +608,41 @@ public partial class AutoMocker : IServiceProvider
         throw new ArgumentException($"Registered service `{Get(serviceType)?.GetType()}` was not a substitute");
     }
 
-    #endregion GetSubstitute
+    /// <summary>
+    /// Compatibility alias for <see cref="GetOrCreateSubstitute{TService}()"/>.
+    /// </summary>
+    /// <typeparam name="TService">The class or interface to resolve.</typeparam>
+    /// <returns>The registered or newly created substitute.</returns>
+    public TService GetSubstitute<TService>() where TService : class
+        => GetOrCreateSubstitute<TService>();
+
+    /// <summary>
+    /// Compatibility alias for <see cref="GetOrCreateSubstitute{TService}(bool)"/>.
+    /// </summary>
+    /// <typeparam name="TService">The class or interface to resolve.</typeparam>
+    /// <param name="enablePrivate">When true, non-public constructors may be used for class substitutes.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public TService GetSubstitute<TService>(bool enablePrivate) where TService : class
+        => GetOrCreateSubstitute<TService>(enablePrivate);
+
+    /// <summary>
+    /// Compatibility alias for <see cref="GetOrCreateSubstitute(Type)"/>.
+    /// </summary>
+    /// <param name="serviceType">The type of service to resolve.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public object GetSubstitute(Type serviceType)
+        => GetOrCreateSubstitute(serviceType);
+
+    /// <summary>
+    /// Compatibility alias for <see cref="GetOrCreateSubstitute(Type, bool)"/>.
+    /// </summary>
+    /// <param name="serviceType">The type of service to resolve.</param>
+    /// <param name="enablePrivate">When true, non-public constructors may be used for class substitutes.</param>
+    /// <returns>The registered or newly created substitute.</returns>
+    public object GetSubstitute(Type serviceType, bool enablePrivate)
+        => GetOrCreateSubstitute(serviceType, enablePrivate);
+
+    #endregion GetOrCreateSubstitute
 
     #region Combine
 

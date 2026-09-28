@@ -59,7 +59,7 @@ public class ObjectGraphContext
 
     /// <summary>
     /// Indicates if the requested operation is for creating a substitute instance.
-    /// This will only be true for types requested through AutoMocker.GetSubstitute methods.
+    /// This will only be true for types requested through AutoMocker.GetOrCreateSubstitute methods.
     /// </summary>
     public bool IsSubstituteCreation { get; }
 

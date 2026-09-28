@@ -15,7 +15,7 @@ public class DescribeHttpMessageHandler
     {
         var mocker = new AutoMocker();
 
-        mocker.GetSubstitute<HttpMessageHandlerWrapper>()
+        mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>()
             .SendAsyncPublic(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -41,7 +41,7 @@ public class DescribeHttpMessageHandler
         await service.GetAsync("https://example.com/api/users");
         await service.PostAsync("https://example.com/api/users", "{}");
 
-        var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+        var handler = mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>();
         await handler.Received(1).SendAsyncPublic(
             Arg.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get),
             Arg.Any<CancellationToken>());
@@ -56,7 +56,7 @@ public class DescribeHttpMessageHandler
     {
         var mocker = new AutoMocker();
 
-        var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+        var handler = mocker.GetOrCreateSubstitute<HttpMessageHandlerWrapper>();
         handler.SendAsyncPublic(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
 

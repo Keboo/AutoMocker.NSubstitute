@@ -22,7 +22,7 @@ public class AutoMockerTests
         AutoMocker mocker = new();
         WithService instance = mocker.CreateInstance<WithService>();
 
-        IService2 substitute = mocker.GetSubstitute<IService2>();
+        IService2 substitute = mocker.GetOrCreateSubstitute<IService2>();
         substitute.Name.Returns("configured");
 
         Assert.AreSame(instance.Service, substitute);
@@ -31,24 +31,46 @@ public class AutoMockerTests
     }
 
     [TestMethod]
-    public void GetSubstitute_CreatesAndCachesSubstitute()
+    public void GetOrCreateSubstitute_CreatesAndCachesSubstitute()
     {
         AutoMocker mocker = new();
 
-        IService1 first = mocker.GetSubstitute<IService1>();
-        IService1 second = mocker.GetSubstitute<IService1>();
+        IService1 first = mocker.GetOrCreateSubstitute<IService1>();
+        IService1 second = mocker.GetOrCreateSubstitute<IService1>();
 
         Assert.AreSame(first, second);
         Assert.IsTrue(AutoMocker.IsSubstitute(first));
     }
 
     [TestMethod]
-    public void GetSubstitute_WithRegisteredRealInstance_Throws()
+    public void GetSubstitute_RemainsAnAliasForGetOrCreateSubstitute()
+    {
+        AutoMocker mocker = new();
+
+        IService1 first = mocker.GetSubstitute<IService1>();
+        IService1 second = mocker.GetOrCreateSubstitute<IService1>();
+
+        Assert.AreSame(first, second);
+        Assert.IsTrue(AutoMocker.IsSubstitute(first));
+    }
+
+    [TestMethod]
+    public void GetOrCreateSubstitute_ReturnsPreviouslyRegisteredSubstitute()
+    {
+        AutoMocker mocker = new();
+        IService1 substitute = Substitute.For<IService1>();
+        mocker.Use(substitute);
+
+        Assert.AreSame(substitute, mocker.GetOrCreateSubstitute<IService1>());
+    }
+
+    [TestMethod]
+    public void GetOrCreateSubstitute_WithRegisteredRealInstance_Throws()
     {
         AutoMocker mocker = new();
         mocker.Use<IService2>(new Service2());
 
-        Assert.ThrowsExactly<ArgumentException>(() => mocker.GetSubstitute<IService2>());
+        Assert.ThrowsExactly<ArgumentException>(() => mocker.GetOrCreateSubstitute<IService2>());
     }
 
     [TestMethod]
@@ -70,7 +92,7 @@ public class AutoMockerTests
         IService2 substitute = Substitute.For<IService2>();
         mocker.Use(substitute);
 
-        Assert.AreSame(substitute, mocker.GetSubstitute<IService2>());
+        Assert.AreSame(substitute, mocker.GetOrCreateSubstitute<IService2>());
     }
 
     [TestMethod]
@@ -171,7 +193,7 @@ public class AutoMockerTests
         WithServiceFunc instance = mocker.CreateInstance<WithServiceFunc>();
         IService1 service = instance.Factory();
 
-        Assert.AreSame(mocker.GetSubstitute<IService1>(), service);
+        Assert.AreSame(mocker.GetOrCreateSubstitute<IService1>(), service);
     }
 
     [TestMethod]
@@ -182,7 +204,7 @@ public class AutoMockerTests
         WithServiceLazy instance = mocker.CreateInstance<WithServiceLazy>();
 
         Assert.IsFalse(instance.Service.IsValueCreated);
-        Assert.AreSame(mocker.GetSubstitute<IService1>(), instance.Service.Value);
+        Assert.AreSame(mocker.GetOrCreateSubstitute<IService1>(), instance.Service.Value);
     }
 
     [TestMethod]
@@ -267,8 +289,8 @@ public class AutoMockerTests
 
         mocker.Combine(typeof(IService1), typeof(IDisposableService));
 
-        IService1 service1 = mocker.GetSubstitute<IService1>();
-        IDisposableService disposable = mocker.GetSubstitute<IDisposableService>();
+        IService1 service1 = mocker.GetOrCreateSubstitute<IService1>();
+        IDisposableService disposable = mocker.GetOrCreateSubstitute<IDisposableService>();
 
         Assert.AreSame((object)service1, disposable);
     }
@@ -303,7 +325,7 @@ public class AutoMockerTests
     public void ResolvedObjects_ContainsResolvedServices()
     {
         AutoMocker mocker = new();
-        IService1 substitute = mocker.GetSubstitute<IService1>();
+        IService1 substitute = mocker.GetOrCreateSubstitute<IService1>();
 
         Assert.IsTrue(mocker.ResolvedObjects.TryGetValue(typeof(IService1), out object? resolved));
         Assert.AreSame(substitute, (IService1?)resolved);
@@ -314,7 +336,7 @@ public class AutoMockerTests
     {
         AutoMocker mocker = new(callBase: true);
 
-        VirtualService substitute = mocker.GetSubstitute<VirtualService>();
+        VirtualService substitute = mocker.GetOrCreateSubstitute<VirtualService>();
 
         Assert.AreEqual("real", substitute.GetValue());
     }
@@ -324,7 +346,7 @@ public class AutoMockerTests
     {
         AutoMocker mocker = new();
 
-        VirtualService substitute = mocker.GetSubstitute<VirtualService>();
+        VirtualService substitute = mocker.GetOrCreateSubstitute<VirtualService>();
 
         Assert.IsTrue(string.IsNullOrEmpty(substitute.GetValue()));
     }
