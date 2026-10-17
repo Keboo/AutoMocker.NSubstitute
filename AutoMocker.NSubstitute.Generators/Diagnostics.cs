@@ -53,6 +53,22 @@ public static class Diagnostics
             => Diagnostic.Create(Rule, location, className);
     }
 
+    public static class PreferWith
+    {
+        public const string DiagnosticId = "AMA0002";
+        private const string UsageCategory = "AutoMocker.Usage";
+        private const string Title = "Use With instead of Use(CreateInstance)";
+        private const string MessageFormat = "Use 'With' instead of passing the result of 'CreateInstance' to 'Use'";
+        private const string Description = "AutoMocker.With creates an instance and registers it in a single call, equivalent to Use(CreateInstance()).";
+
+        //NB: Do not make a property or use target-typed new expression
+        internal static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat,
+            UsageCategory, DiagnosticSeverity.Info, isEnabledByDefault: true, description: Description);
+
+        public static Diagnostic Create(Location? location)
+            => Diagnostic.Create(Rule, location);
+    }
+
     public static class PreferWithOptions
     {
         public const string DiagnosticId = "AMA0001";
