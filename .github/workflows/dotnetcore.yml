@@ -144,6 +144,5 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
 
       - name: Push NuGet (Trusted Publishing)
-        # Pushing the nupkg also pushes its matching snupkg. Do not skip duplicate
-        # versions: their published DLLs may not match symbols from this build.
-        run: dotnet nuget push "${{ github.workspace }}/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        # Pushing the nupkg also pushes its matching snupkg.
+        run: dotnet nuget push "${{ github.workspace }}/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
