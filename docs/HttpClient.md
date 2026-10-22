@@ -1,297 +1,179 @@
-# HttpClient Support
+# HTTP
 
-AutoMocker.NSubstitute provides built-in support for testing code that depends on `HttpClient`. When your class accepts an `HttpClient` constructor parameter, AutoMocker automatically resolves it with a substituted `HttpMessageHandler` — no manual setup required.
+`HttpMessageHandlerExtensions`: `NSubstitute.AutoMock`. `HttpResponseExtensions` and `HttpMessageHandlerWrapper`: `NSubstitute.AutoMock.Http`. [Documentation index](README.md).
 
-## Features
-
-- **Automatic resolution** of `HttpClient` dependencies via `HttpClientResolver`
-- **Named `IHttpClientFactory` support** with one testable client cached per client name
-- **Verb-specific setup methods** for GET, POST, PUT, PATCH, DELETE, and HEAD
-- **Flexible request matching** by URI substring or a predicate
-- **Fluent response builders** for string, byte array, stream, and custom content types
-- **Verification helpers** built on NSubstitute's `Received()` to assert that specific HTTP requests were made
-- **Custom response configuration** including headers, status codes, and media types
-- **Default behavior** returns HTTP 200 OK with empty content for any unconfigured request
-
-## How It Works
-
-NSubstitute has no equivalent of Moq's `.Protected()` API, so it cannot configure or verify the protected `HttpMessageHandler.SendAsync` method directly. To work around this, AutoMocker.NSubstitute substitutes an internal `HttpMessageHandlerWrapper` — a subclass of `HttpMessageHandler` that exposes a public abstract `SendAsyncPublic` method and overrides the protected `SendAsync` to delegate to it. Because the wrapper's real `SendAsync` override must run, AutoMocker always creates this substitute as a partial substitute (`Substitute.ForPartsOf`), regardless of the container's `CallBase` setting.
-
-`HttpClientResolver` intercepts `HttpClient` dependencies. When `CreateInstance<T>()` encounters an `HttpClient` parameter, the resolver:
-
-1. Creates (or retrieves) the `HttpMessageHandlerWrapper` substitute via `GetSubstitute<HttpMessageHandlerWrapper>()`
-2. Configures a default response of HTTP 200 OK with empty content for any request
-3. Wraps the handler in a new `HttpClient` instance
-
-This means you can immediately create and test classes that use `HttpClient` without any explicit setup. The extension methods on `AutoMocker` and `HttpMessageHandlerWrapper` then let you customize request matching and response behavior using standard NSubstitute syntax.
-
-When the consuming project references `Microsoft.Extensions.Http`, the source generator adds `WithHttpClientFactory()`. Call this generated extension to enable testable `IHttpClientFactory` resolution. Calling `CreateClient` with the same name returns the same `HttpClient` instance; different names receive separate instances. All named clients use the same testable handler, so the existing setup and verification helpers apply:
+`AutoMocker` resolves `HttpClient` with a partial `HttpMessageHandlerWrapper` substitute. Unconfigured requests return HTTP 200 with empty content, regardless of `AutoMocker.CallBase`.
 
 ```csharp
-var mocker = new AutoMocker()
-    .WithHttpClientFactory();
-var factory = mocker.Get<IHttpClientFactory>();
-var catalogClient = factory.CreateClient("catalog");
-var sameCatalogClient = factory.CreateClient("catalog");
-var ordersClient = factory.CreateClient("orders");
+using System.Net;
+using System.Net.Http;
+using NSubstitute;
+using NSubstitute.AutoMock;
+using NSubstitute.AutoMock.Http;
 
-Assert.AreSame(catalogClient, sameCatalogClient);
-Assert.AreNotSame(catalogClient, ordersClient);
-```
-
-See the [HTTP Client Factory Extension Generator](SourceGenerators/HttpClientFactoryExtensionGenerator.md) page for advanced usage and details on disabling this generator via the `EnableAutoMockerNSubstituteHttpClientFactoryGenerator` MSBuild property.
-
-## Usage
-
-### Basic Setup
-
-Create an `AutoMocker`, set up an HTTP response, and test your service:
-
-```csharp
-[TestMethod]
-public async Task GetUsers_ReturnsUserList()
-{
-    // Arrange
-    AutoMocker mocker = new();
-    mocker.SetupHttpGet("/users")
-        .ReturnsHttpResponse(HttpStatusCode.OK, """{"users": []}""");
-
-    var service = mocker.CreateInstance<UserService>();
-
-    // Act
-    var response = await service.GetUsersAsync();
-
-    // Assert
-    Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-}
-```
-
-Without any setup, requests return HTTP 200 OK with empty content by default.
-
-### Setup by URL
-
-Match requests by a URL substring. The match checks whether the request URI contains the specified string:
-
-```csharp
+var mocker = new AutoMocker();
 mocker.SetupHttpGet("/users")
-    .ReturnsHttpResponse(HttpStatusCode.OK, """{"users": []}""");
+    .ReturnsHttpResponse(HttpStatusCode.OK, "[]", mediaType: "application/json");
 
+using var response = await mocker.Get<HttpClient>()
+    .GetAsync("https://example.test/users");
+mocker.VerifyHttpGet("/users", requiredNumberOfCalls: 1);
+```
+
+## HttpMessageHandlerExtensions: setup
+
+Each method below has overloads on **both** `AutoMocker` and `HttpMessageHandlerWrapper`. All return `Task<HttpResponseMessage>`, the pending substitute call; immediately chain `ReturnsHttpResponse`, `ReturnsResponse`, or NSubstitute's `Returns`.
+
+Receivers are omitted:
+
+| Method | Overloads |
+| --- | --- |
+| `SetupHttpGet` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpPost` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpPut` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpPatch` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpDelete` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpHead` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttp` | `(Func<HttpRequestMessage, bool> match)` |
+
+Verb helpers restrict the HTTP method. `SetupHttp` matches any method satisfying the predicate. URI matching is a case-sensitive substring of the absolute URI; body matching is exact text. Null URI/content filters match anything.
+
+```csharp
 mocker.SetupHttpPost("/orders", "order data")
-    .ReturnsHttpResponse(HttpStatusCode.Created, """{"id": 1}""");
-
-mocker.SetupHttpPut("/users/1", "updated data")
-    .ReturnsHttpResponse(HttpStatusCode.OK, """{"updated": true}""");
-
-mocker.SetupHttpPatch("/users/1", "partial update")
-    .ReturnsHttpResponse(HttpStatusCode.OK, """{"updated": true}""");
-
-mocker.SetupHttpDelete("/users/1")
+    .ReturnsHttpResponse(HttpStatusCode.Created);
+mocker.SetupHttpPut("/orders/1", "replacement")
+    .ReturnsHttpResponse(HttpStatusCode.OK);
+mocker.SetupHttpPatch("/orders/1", "change")
+    .ReturnsHttpResponse(HttpStatusCode.OK);
+mocker.SetupHttpDelete("/orders/1")
     .ReturnsHttpResponse(HttpStatusCode.NoContent);
-
 mocker.SetupHttpHead("/health")
     .ReturnsHttpResponse(HttpStatusCode.OK);
+
+var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+handler.SetupHttpGet(r => r.RequestUri!.AbsolutePath == "/users")
+    .ReturnsHttpResponse("[]");
+handler.SetupHttp(r => r.Method == HttpMethod.Options)
+    .ReturnsHttpResponse(HttpStatusCode.NoContent);
 ```
 
-### Setup by Predicate
+## HttpResponseExtensions: response builders
 
-Use a `Func<HttpRequestMessage, bool>` for more complex request matching:
+All overloads extend `Task<HttpResponseMessage>` and return `NSubstitute.Core.ConfiguredCall`. Receivers and return types are omitted below. Every `configure` callback can change headers or other response properties.
+
+### ReturnsHttpResponse
 
 ```csharp
-mocker.SetupHttpGet(r => r.RequestUri!.AbsoluteUri.EndsWith("/people"))
-    .ReturnsHttpResponse(HttpStatusCode.OK, """[{"name": "Alice"}]""");
-
-mocker.SetupHttpPost(r => r.RequestUri!.AbsoluteUri.Contains("/api/"))
-    .ReturnsHttpResponse(HttpStatusCode.Accepted);
+ReturnsHttpResponse(
+    HttpStatusCode statusCode, Action<HttpResponseMessage>? configure = null)
+ReturnsHttpResponse(
+    HttpStatusCode statusCode, HttpContent content,
+    Action<HttpResponseMessage>? configure = null)
+ReturnsHttpResponse(
+    HttpStatusCode statusCode, string content,
+    string? mediaType = null, Encoding? encoding = null,
+    Action<HttpResponseMessage>? configure = null)
+ReturnsHttpResponse(
+    string content, string? mediaType = null, Encoding? encoding = null,
+    Action<HttpResponseMessage>? configure = null)
 ```
 
-### Multiple URLs with Different Responses
+The status-free overload uses HTTP 200. String content defaults to UTF-8 and `text/plain`.
 
 ```csharp
 mocker.SetupHttpGet("/users")
-    .ReturnsHttpResponse(HttpStatusCode.OK, """{"users": []}""");
-
-mocker.SetupHttpGet("/products")
-    .ReturnsHttpResponse(HttpStatusCode.OK, """{"products": []}""");
-
-var service = mocker.CreateInstance<CatalogService>();
-
-var usersResponse = await service.GetUsersAsync();    // matches /users
-var productsResponse = await service.GetProductsAsync(); // matches /products
+    .ReturnsHttpResponse(HttpStatusCode.OK, "[]", "application/json",
+        configure: response => response.Headers.Add("X-Test", "true"));
+mocker.SetupHttpGet("/custom")
+    .ReturnsHttpResponse(HttpStatusCode.OK, new StringContent("custom"));
 ```
 
-### Error Responses
+### ReturnsResponse
 
 ```csharp
-mocker.SetupHttpGet()
-    .ReturnsHttpResponse(HttpStatusCode.InternalServerError, "Server Error");
-
-mocker.SetupHttpPost()
-    .ReturnsHttpResponse(HttpStatusCode.BadRequest, """{"error": "Invalid input"}""");
+ReturnsResponse(
+    HttpStatusCode statusCode, byte[] content, string? mediaType = null,
+    Action<HttpResponseMessage>? configure = null)
+ReturnsResponse(
+    byte[] content, string? mediaType = null,
+    Action<HttpResponseMessage>? configure = null)
+ReturnsResponse(
+    HttpStatusCode statusCode, Stream content, string? mediaType = null,
+    Action<HttpResponseMessage>? configure = null)
+ReturnsResponse(
+    Stream content, string? mediaType = null,
+    Action<HttpResponseMessage>? configure = null)
 ```
 
-### Custom Headers
-
-Use the `configure` callback to modify response headers or other properties:
+Status-free overloads use HTTP 200. Seekable streams are reset to position zero **at setup time**. Builders reuse a configured response/content object; use NSubstitute `Returns` with a factory when each call needs a fresh response. Non-null content is required by every content overload.
 
 ```csharp
-mocker.SetupHttpGet()
-    .ReturnsHttpResponse(HttpStatusCode.OK, "Response body", configure: response =>
+mocker.SetupHttpGet("/bytes")
+    .ReturnsResponse(new byte[] { 1, 2, 3 }, "application/octet-stream");
+mocker.SetupHttpGet("/stream")
+    .ReturnsResponse(HttpStatusCode.OK, new MemoryStream(new byte[] { 4, 5 }));
+
+mocker.SetupHttpGet("/fresh").Returns(_ =>
+    Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
     {
-        response.Headers.Add("X-Custom-Header", "CustomValue");
-        response.Headers.Add("X-Request-Id", "abc-123");
-    });
+        Content = new StringContent("fresh per call")
+    }));
 ```
 
-### Binary Content
+## HttpMessageHandlerExtensions: verification
 
-Return byte array responses with a specified media type:
+Verb-specific methods extend **AutoMocker only**:
 
 ```csharp
-var pdfBytes = File.ReadAllBytes("sample.pdf");
-
-mocker.SetupHttpGet("/documents/1")
-    .ReturnsResponse(HttpStatusCode.OK, pdfBytes, "application/pdf");
+void VerifyHttpGet(string? requestUri = null, int? requiredNumberOfCalls = null)
+void VerifyHttpPost(
+    string? requestUri = null, string? content = null, int? requiredNumberOfCalls = null)
+void VerifyHttpPut(
+    string? requestUri = null, string? content = null, int? requiredNumberOfCalls = null)
+void VerifyHttpPatch(
+    string? requestUri = null, string? content = null, int? requiredNumberOfCalls = null)
+void VerifyHttpDelete(string? requestUri = null, int? requiredNumberOfCalls = null)
+void VerifyHttpHead(string? requestUri = null, int? requiredNumberOfCalls = null)
 ```
 
-### Stream Content
-
-Return stream-based responses. Seekable streams are automatically reset to position 0 before use:
+The lower-level helper extends **HttpMessageHandlerWrapper only**:
 
 ```csharp
-using var stream = new MemoryStream(Encoding.UTF8.GetBytes("streamed content"));
-
-mocker.SetupHttpGet("/download")
-    .ReturnsResponse(HttpStatusCode.OK, stream, "application/octet-stream");
+void VerifyHttp(
+    HttpMethod method, Func<HttpRequestMessage, bool> match,
+    int? requiredNumberOfCalls = null)
 ```
 
-### Verb Isolation
-
-Each setup method only matches its specific HTTP method. A `SetupHttpGet` will not match POST requests, and vice versa — unmatched requests fall back to the default HTTP 200 OK response (or another matching setup, if configured):
+Matching follows setup rules. A null count means at least once; a supplied count is exact, including zero for no calls. Failed checks throw NSubstitute's received-call exception.
 
 ```csharp
-mocker.SetupHttpGet("/people")
-    .ReturnsHttpResponse(HttpStatusCode.OK, "[]");
-
-var service = mocker.CreateInstance<PeopleService>();
-
-// This POST does not match the GET-only setup above.
-var response = await service.CreatePersonAsync("Alice");
+mocker.VerifyHttpPost("/orders", "order data", requiredNumberOfCalls: 1);
+mocker.VerifyHttpPut("/orders/1", "replacement", requiredNumberOfCalls: 1);
+mocker.VerifyHttpPatch("/orders/1", "change", requiredNumberOfCalls: 1);
+mocker.VerifyHttpDelete("/orders/1", requiredNumberOfCalls: 0);
+mocker.VerifyHttpHead("/health", requiredNumberOfCalls: 1);
+handler.VerifyHttp(HttpMethod.Get,
+    r => r.RequestUri!.AbsolutePath == "/users", requiredNumberOfCalls: 1);
 ```
 
-## Verification
+## HttpMessageHandlerWrapper and CreateClient
 
-Verify that specific HTTP requests were made during the test, using an NSubstitute-style expected call count:
+`HttpMessageHandlerWrapper` is an abstract `HttpMessageHandler` with a protected parameterless constructor. Its protected `SendAsync` override delegates to:
 
 ```csharp
-var service = mocker.CreateInstance<NotificationService>();
-
-await service.SendNotificationAsync("Hello");
-
-// Verify a GET was made to a specific URL
-mocker.VerifyHttpGet("https://example.com/api/status", requiredNumberOfCalls: 1);
-
-// Verify a POST with specific content
-mocker.VerifyHttpPost("https://example.com/api/notify", "Hello", requiredNumberOfCalls: 1);
-
-// Verify PUT, PATCH, DELETE, HEAD
-mocker.VerifyHttpPut("https://example.com/api/config", "new value", requiredNumberOfCalls: 1);
-mocker.VerifyHttpPatch("https://example.com/api/config", "partial value", requiredNumberOfCalls: 1);
-mocker.VerifyHttpDelete("https://example.com/api/cache", requiredNumberOfCalls: 1);
-mocker.VerifyHttpHead("https://example.com/api/health", requiredNumberOfCalls: 1);
+public abstract Task<HttpResponseMessage> SendAsyncPublic(
+    HttpRequestMessage request, CancellationToken cancellationToken);
 ```
 
-## Lower-Level Access
-
-For advanced scenarios, retrieve the `HttpMessageHandlerWrapper` substitute directly and use plain NSubstitute syntax:
+`HttpMessageHandlerExtensions.CreateClient(this HttpMessageHandlerWrapper handler)` returns an `HttpClient` without transferring handler ownership. Dispose the client separately.
 
 ```csharp
 var handler = mocker.GetSubstitute<HttpMessageHandlerWrapper>();
+using HttpClient client = handler.CreateClient();
 
-// Setup directly
-handler.SendAsyncPublic(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
-    .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-    {
-        Content = new StringContent("Hello, World!")
-    }));
-
-// Create an HttpClient from the substitute directly
-HttpClient client = handler.CreateClient();
-
-// Verify directly
 await handler.Received(1).SendAsyncPublic(
     Arg.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get),
     Arg.Any<CancellationToken>());
 ```
 
-The handler also exposes `VerifyHttp` for reusable method and predicate matching:
-
-```csharp
-handler.VerifyHttp(
-    HttpMethod.Get,
-    request => request.RequestUri!.AbsoluteUri.EndsWith("/people"),
-    requiredNumberOfCalls: 1);
-```
-
-## API Reference
-
-### Setup Methods
-
-All setup methods are available as extension methods on both `AutoMocker` and `HttpMessageHandlerWrapper`. Each returns a `Task<HttpResponseMessage>` representing the pending call, ready to be chained with `Returns`/`ReturnsHttpResponse`/`ReturnsResponse`.
-
-| Method | Description |
-|--------|-------------|
-| `SetupHttpGet(string?)` | Setup GET requests, optionally matching a URL substring |
-| `SetupHttpGet(Func<HttpRequestMessage, bool>)` | Setup GET requests matching a predicate |
-| `SetupHttpPost(string?, string?)` | Setup POST requests with optional URL and content matching |
-| `SetupHttpPost(Func<HttpRequestMessage, bool>)` | Setup POST requests matching a predicate |
-| `SetupHttpPut(string?, string?)` | Setup PUT requests with optional URL and content matching |
-| `SetupHttpPut(Func<HttpRequestMessage, bool>)` | Setup PUT requests matching a predicate |
-| `SetupHttpPatch(string?, string?)` | Setup PATCH requests with optional URL and content matching |
-| `SetupHttpPatch(Func<HttpRequestMessage, bool>)` | Setup PATCH requests matching a predicate |
-| `SetupHttpDelete(string?)` | Setup DELETE requests, optionally matching a URL substring |
-| `SetupHttpDelete(Func<HttpRequestMessage, bool>)` | Setup DELETE requests matching a predicate |
-| `SetupHttpHead(string?)` | Setup HEAD requests, optionally matching a URL substring |
-| `SetupHttpHead(Func<HttpRequestMessage, bool>)` | Setup HEAD requests matching a predicate |
-| `SetupHttp(Func<HttpRequestMessage, bool>)` | Setup a call matching any HTTP method for the given predicate |
-
-### Response Methods
-
-| Method | Description |
-|--------|-------------|
-| `ReturnsHttpResponse(HttpStatusCode)` | Return a response with the given status code |
-| `ReturnsHttpResponse(HttpStatusCode, string)` | Return a string response with status code |
-| `ReturnsHttpResponse(HttpStatusCode, HttpContent)` | Return custom content with status code |
-| `ReturnsHttpResponse(string)` | Return a string response with HTTP 200 OK |
-| `ReturnsResponse(HttpStatusCode, byte[], string?)` | Return byte array content with media type |
-| `ReturnsResponse(HttpStatusCode, Stream, string?)` | Return stream content with media type |
-| `ReturnsResponse(byte[], string?)` | Return byte array content with HTTP 200 OK |
-| `ReturnsResponse(Stream, string?)` | Return stream content with HTTP 200 OK |
-
-All response methods accept an optional `Action<HttpResponseMessage>? configure` parameter for customizing headers and other response properties.
-
-### Verification Methods
-
-| Method | Target |
-|--------|--------|
-| `VerifyHttpGet(string?, int?)` | Verify GET requests to a URL |
-| `VerifyHttpPost(string?, string?, int?)` | Verify POST requests with optional content |
-| `VerifyHttpPut(string?, string?, int?)` | Verify PUT requests with optional content |
-| `VerifyHttpPatch(string?, string?, int?)` | Verify PATCH requests with optional content |
-| `VerifyHttpDelete(string?, int?)` | Verify DELETE requests to a URL |
-| `VerifyHttpHead(string?, int?)` | Verify HEAD requests to a URL |
-| `VerifyHttp(HttpMethod, Func<HttpRequestMessage, bool>, int?)` | Verify requests using a method and predicate |
-
-`requiredNumberOfCalls` defaults to at least once (NSubstitute's `Received()` with no count) when omitted.
-
-### Utility Methods
-
-| Method | Description |
-|--------|-------------|
-| `CreateClient()` | Create an `HttpClient` backed by an `HttpMessageHandlerWrapper` substitute |
-
-## Best Practices
-
-- **Use verb-specific methods** (`SetupHttpGet`, `SetupHttpPost`, etc.) instead of the generic `SetupHttp` for clearer test intent and automatic HTTP method filtering
-- **Match by URL substring** for simple cases (`"/users"`) and **predicates** for complex matching logic
-- **Verify requests** to confirm your code sends the right HTTP method, URL, and content
-- **Leverage the `configure` callback** to test code that inspects response headers
+For named clients, see [WithHttpClientFactory](SourceGenerators/HttpClientFactoryExtensionGenerator.md). The generated factory caches one client per name; named clients share the testable handler.
