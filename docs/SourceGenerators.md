@@ -171,6 +171,46 @@ var client = factory.CreateClient("catalog");
 
 [Learn more →](SourceGenerators/HttpClientFactoryExtensionGenerator.md)
 
+## Analyzer: Unnecessary Test Double Registration (AMA0003)
+
+The informational diagnostic `AMA0003` flags `Use` calls that register a plain,
+unconfigured substitute or re-register a substitute returned by the same AutoMocker.
+AutoMocker creates substitutes on demand and retains the substitutes returned by
+`GetSubstitute`.
+Class targets, including abstract classes, are excluded even when retrieved with
+`GetSubstitute`; the diagnostic still applies to interface targets.
+
+```csharp
+// Unnecessary registrations:
+mocker.Use(Substitute.For<IService>());
+mocker.Use(mocker.GetSubstitute<IService>());
+
+// Create and register a fresh substitute in one call instead:
+var freshService = mocker.WithSubstitute<IService>();
+freshService.GetValue().Returns(42);
+
+// Or retrieve the existing substitute without re-registering it:
+var service = mocker.GetSubstitute<IService>();
+service.GetValue().Returns(42);
+// No mocker.Use(service) is needed, even after configuration.
+```
+
+Direct registrations suggest `WithSubstitute<T>()`, which creates and registers a
+fresh substitute. For substitutes already returned by `GetSubstitute`, remove the
+redundant `Use` instead of creating a replacement.
+
+The analyzer also recognizes simple local variables and the
+`Use(typeof(T), instance)` overload. It preserves substitutes with constructor
+arguments, partial substitutes, and multi-interface substitutes. For separately
+created substitutes stored in locals, it skips the diagnostic if the local is
+used elsewhere, including later configuration, verification, or sharing with
+other code. Re-registration diagnostics require the same container and service
+type; property or method receivers, reassigned locals, and intervening container
+accesses are conservatively skipped.
+
+Suppress the diagnostic with `dotnet_diagnostic.AMA0003.severity = none` in an
+`.editorconfig`.
+
 ## Important: Generated Classes Are Internal Partials
 
 Most extension classes created by these source generators are **internal partial classes**. The HTTP client factory extension class is public. For example, the Keyed Services generator produces:

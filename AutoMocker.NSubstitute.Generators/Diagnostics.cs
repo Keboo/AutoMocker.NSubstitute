@@ -86,6 +86,22 @@ public static class Diagnostics
             => Diagnostic.Create(Rule, location, optionsTypeName, HelpLink);
     }
 
+    public static class RedundantUse
+    {
+        public const string DiagnosticId = "AMA0003";
+        private const string Title = "Unnecessary test double registration";
+        private const string MessageFormat = "'Use' is unnecessary: {0}";
+        private const string Description = "Use WithSubstitute to create and register an unconfigured substitute in one call. AutoMocker retains substitutes returned by GetSubstitute, so do not re-register a substitute retrieved from the same AutoMocker.";
+
+        internal static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat,
+            "AutoMocker.Usage", DiagnosticSeverity.Info, isEnabledByDefault: true, description: Description);
+
+        public static Diagnostic Create(Location? location, bool retained)
+            => Diagnostic.Create(Rule, location, retained
+                ? "this AutoMocker already retains the substitute returned by GetSubstitute"
+                : "use WithSubstitute<T>() to create and register the substitute in one call");
+    }
+
     public static class DuplicateTargetType
     {
         public const string DiagnosticId = "AMG0004";
