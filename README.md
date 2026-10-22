@@ -47,6 +47,14 @@ mocker.GetSubstitute<IEngineProvider>().Received(1).GetEngine();
 - `AsDisposable()` — dispose all disposable instances tracked by the container.
 - Implements `IServiceProvider`.
 
+## Documentation
+
+See the [documentation index](docs/README.md) for all public APIs, with examples and overloads grouped by method.
+
+- [AutoMocker](docs/AutoMocker.md)
+- [Resolvers and contexts](docs/Resolvers.md)
+- [Diagnostics and constructor tests](docs/Diagnostics.md)
+
 ## HttpClient support
 
 Classes that depend on `HttpClient` are automatically resolved with a substituted `HttpMessageHandler`, returning HTTP 200 OK by default. Verb-specific helpers make setup and verification concise:
