@@ -308,6 +308,37 @@ public partial class AutoMocker : IServiceProvider
     #region Use
 
     /// <summary>
+    /// Creates a fresh substitute using this container's services and registers it with Use,
+    /// replacing any existing registration for <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The service type to substitute and register.</typeparam>
+    /// <param name="enablePrivate">When true, non-public constructors will also be considered.</param>
+    /// <param name="callBase">Whether to create a partial substitute, or the container's setting when omitted.</param>
+    /// <returns>The registered substitute, ready for configuration.</returns>
+    public T WithSubstitute<T>(bool enablePrivate = false, bool? callBase = null)
+        where T : class
+        => (T)WithSubstitute(typeof(T), enablePrivate, callBase);
+
+    /// <summary>
+    /// Creates a fresh substitute using this container's services and registers it with Use,
+    /// replacing any existing registration for <paramref name="serviceType"/>.
+    /// </summary>
+    /// <param name="serviceType">The service type to substitute and register.</param>
+    /// <param name="enablePrivate">When true, non-public constructors will also be considered.</param>
+    /// <param name="callBase">Whether to create a partial substitute, or the container's setting when omitted.</param>
+    /// <returns>The registered substitute, ready for configuration.</returns>
+    public object WithSubstitute(Type serviceType, bool enablePrivate = false, bool? callBase = null)
+    {
+        if (serviceType is null) throw new ArgumentNullException(nameof(serviceType));
+
+        var context = new ObjectGraphContext(enablePrivate);
+        object substitute = CreateSubstitute(serviceType, callBase ?? CallBase, context)
+            ?? throw new ObjectCreationException($"Failed to create substitute of type {serviceType.FullName}", context.DiagnosticMessages);
+        Use(serviceType, substitute);
+        return substitute;
+    }
+
+    /// <summary>
     /// Adds an instance to the container.
     /// </summary>
     /// <typeparam name="TService">The type that the instance will be registered as</typeparam>

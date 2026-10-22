@@ -90,6 +90,46 @@ var service = mocker.CreateInstance<OrderService>();
 store.Received(1).Find(42);
 ```
 
+## WithSubstitute
+
+```csharp
+T WithSubstitute<T>(bool enablePrivate = false, bool? callBase = null)
+    where T : class
+object WithSubstitute(
+    Type serviceType, bool enablePrivate = false, bool? callBase = null)
+```
+
+Creates a fresh substitute, registers it under the requested service type, and
+returns the substitute itself for configuration. Supports interfaces and
+substitutable classes; class constructor dependencies are resolved from the
+container. Each call replaces an existing registration, discarding that
+substitute's configuration and call history from the container. Use
+`GetSubstitute` to reuse the current substitute instead.
+
+`enablePrivate` defaults to `false`; `true` includes non-public constructors but
+does not bypass proxy accessibility restrictions. `callBase` defaults to the
+container's `CallBase` setting. When true, class targets are partial substitutes
+whose unconfigured virtual members run the real implementation; interface
+targets remain ordinary substitutes. Non-virtual members cannot be substituted.
+
+Throws `ArgumentNullException` for a null runtime type or
+[ObjectCreationException](Diagnostics.md#objectcreationexception) when the
+substitute cannot be created.
+
+```csharp
+using NSubstitute.Extensions;
+
+var store = mocker.WithSubstitute<IStore>();
+store.Find(42).Returns("item");
+IStore sameStore = mocker.Get<IStore>();
+
+var clock = (IClock)mocker.WithSubstitute(typeof(IClock));
+
+// Configure() avoids running the real virtual member during setup.
+var worker = mocker.WithSubstitute<Worker>(callBase: true);
+worker.Configure().Load().Returns("test");
+```
+
 ## Use
 
 All overloads return the same `AutoMocker` for chaining.
