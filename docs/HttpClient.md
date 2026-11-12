@@ -28,15 +28,26 @@ Receivers are omitted:
 
 | Method | Overloads |
 | --- | --- |
-| `SetupHttpGet` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttpPost` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttpPut` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttpPatch` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttpDelete` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttpHead` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)` |
-| `SetupHttp` | `(Func<HttpRequestMessage, bool> match)` |
+| `SetupHttpGet` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttpPost` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttpPut` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttpPatch` | `(string? requestUri = null, string? content = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttpDelete` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttpHead` | `(string? requestUri = null)`; `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
+| `SetupHttp` | `(Func<HttpRequestMessage, bool> match)`; `(Func<HttpRequestMessage, Task<bool>> match)` |
 
 Verb helpers restrict the HTTP method. `SetupHttp` matches any method satisfying the predicate. URI matching is a case-sensitive substring of the absolute URI; body matching is exact text. Null URI/content filters match anything.
+
+Use the `Func<HttpRequestMessage, Task<bool>>` overload when matching requires asynchronous work, such as reading request content:
+
+```csharp
+mocker.SetupHttpPost(async r =>
+    r.RequestUri!.AbsoluteUri.Contains("/api/") &&
+    await r.Content!.ReadAsStringAsync() == "order data")
+    .ReturnsHttpResponse(HttpStatusCode.Accepted);
+```
+
+More verb-specific examples:
 
 ```csharp
 mocker.SetupHttpPost("/orders", "order data")
