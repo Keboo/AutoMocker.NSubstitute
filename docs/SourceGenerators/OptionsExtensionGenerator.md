@@ -65,11 +65,6 @@ public static AutoMocker WithOptions<TClass>(this AutoMocker mocker, Action<TCla
 }
 ```
 
-The constraint follows the resolved `Microsoft.Extensions.Options` assembly version,
-whether the package is referenced directly or transitively. Versions before 5.0
-generate `where TClass : class, new()` because those versions require a public
-parameterless constructor. Version 5.0 and later retain `where TClass : class`.
-
 ## How It Works
 
 The `WithOptions<T>()` method sets up the complete options infrastructure in your `AutoMocker` instance:
