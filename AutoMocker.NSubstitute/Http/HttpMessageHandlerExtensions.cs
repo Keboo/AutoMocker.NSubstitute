@@ -55,6 +55,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a GET request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpGet(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpGet(match);
+    }
+
+    /// <summary>
     /// Configures a call for a GET request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -70,6 +83,15 @@ public static partial class HttpMessageHandlerExtensions
     /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttpGet(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, HttpMethod.Get, match);
+
+    /// <summary>
+    /// Configures a call for a GET request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpGet(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
         => SetupHttp(handler, HttpMethod.Get, match);
 
     /// <summary>
@@ -100,6 +122,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a POST request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPost(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPost(match);
+    }
+
+    /// <summary>
     /// Configures a call for a POST request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -116,6 +151,15 @@ public static partial class HttpMessageHandlerExtensions
     /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttpPost(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, HttpMethod.Post, match);
+
+    /// <summary>
+    /// Configures a call for a POST request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPost(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
         => SetupHttp(handler, HttpMethod.Post, match);
 
     /// <summary>
@@ -146,6 +190,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a PUT request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPut(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPut(match);
+    }
+
+    /// <summary>
     /// Configures a call for a PUT request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -162,6 +219,15 @@ public static partial class HttpMessageHandlerExtensions
     /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttpPut(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, HttpMethod.Put, match);
+
+    /// <summary>
+    /// Configures a call for a PUT request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPut(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
         => SetupHttp(handler, HttpMethod.Put, match);
 
     /// <summary>
@@ -192,6 +258,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a PATCH request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpPatch(match);
+    }
+
+    /// <summary>
     /// Configures a call for a PATCH request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -208,6 +287,15 @@ public static partial class HttpMessageHandlerExtensions
     /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttpPatch(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, new HttpMethod("PATCH"), match);
+
+    /// <summary>
+    /// Configures a call for a PATCH request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpPatch(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
         => SetupHttp(handler, new HttpMethod("PATCH"), match);
 
     /// <summary>
@@ -237,6 +325,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a DELETE request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpDelete(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpDelete(match);
+    }
+
+    /// <summary>
     /// Configures a call for a DELETE request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -252,6 +353,15 @@ public static partial class HttpMessageHandlerExtensions
     /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttpDelete(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, bool> match)
+        => SetupHttp(handler, HttpMethod.Delete, match);
+
+    /// <summary>
+    /// Configures a call for a DELETE request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpDelete(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
         => SetupHttp(handler, HttpMethod.Delete, match);
 
     /// <summary>
@@ -281,6 +391,19 @@ public static partial class HttpMessageHandlerExtensions
     }
 
     /// <summary>
+    /// Configures a call for a HEAD request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpHead(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttpHead(match);
+    }
+
+    /// <summary>
     /// Configures a call for a HEAD request. Chain with <c>Returns</c>/<c>ReturnsHttpResponse</c> to
     /// specify the response.
     /// </summary>
@@ -299,12 +422,34 @@ public static partial class HttpMessageHandlerExtensions
         => SetupHttp(handler, HttpMethod.Head, match);
 
     /// <summary>
+    /// Configures a call for a HEAD request using an asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttpHead(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
+        => SetupHttp(handler, HttpMethod.Head, match);
+
+    /// <summary>
     /// Configures a call matching any HTTP method for the given predicate. Chain with
     /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
     /// </summary>
     /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
     /// <param name="match">The predicate used to match the <see cref="HttpRequestMessage" />.</param>
     public static Task<HttpResponseMessage> SetupHttp(this AutoMocker mocker, Func<HttpRequestMessage, bool> match)
+    {
+        if (mocker is null)
+            throw new ArgumentNullException(nameof(mocker));
+        return mocker.GetSubstitute<HttpMessageHandlerWrapper>().SetupHttp(match);
+    }
+
+    /// <summary>
+    /// Configures a call matching any HTTP method for the given asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="mocker">The <see cref="AutoMocker" /> instance.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttp(this AutoMocker mocker, Func<HttpRequestMessage, Task<bool>> match)
     {
         if (mocker is null)
             throw new ArgumentNullException(nameof(mocker));
@@ -327,8 +472,27 @@ public static partial class HttpMessageHandlerExtensions
         return handler.SendAsyncPublic(Arg.Is<HttpRequestMessage>(r => match(r)), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Configures a call matching any HTTP method for the given asynchronous predicate. Chain with
+    /// <c>Returns</c>/<c>ReturnsHttpResponse</c> to specify the response.
+    /// </summary>
+    /// <param name="handler">The <see cref="HttpMessageHandlerWrapper" /> substitute.</param>
+    /// <param name="match">The asynchronous predicate used to match the <see cref="HttpRequestMessage" />.</param>
+    public static Task<HttpResponseMessage> SetupHttp(this HttpMessageHandlerWrapper handler, Func<HttpRequestMessage, Task<bool>> match)
+    {
+        if (handler is null)
+            throw new ArgumentNullException(nameof(handler));
+        if (match is null)
+            throw new ArgumentNullException(nameof(match));
+
+        return handler.SendAsyncPublic(Arg.Is<HttpRequestMessage>(r => AsyncPredicateMatches(match, r)), Arg.Any<CancellationToken>());
+    }
+
     private static Task<HttpResponseMessage> SetupHttp(HttpMessageHandlerWrapper handler, HttpMethod method, Func<HttpRequestMessage, bool> match)
         => SetupHttp(handler, r => r.Method == method && match(r));
+
+    private static Task<HttpResponseMessage> SetupHttp(HttpMessageHandlerWrapper handler, HttpMethod method, Func<HttpRequestMessage, Task<bool>> match)
+        => SetupHttp(handler, r => r.Method == method && AsyncPredicateMatches(match, r));
 
     /// <summary>
     /// Verifies that a GET request matching the given URI was made.
@@ -444,4 +608,7 @@ public static partial class HttpMessageHandlerExtensions
 
         return content is not null && content.ReadAsStringAsync().GetAwaiter().GetResult() == match;
     }
+
+    private static bool AsyncPredicateMatches(Func<HttpRequestMessage, Task<bool>> match, HttpRequestMessage request)
+        => match(request).ConfigureAwait(false).GetAwaiter().GetResult();
 }

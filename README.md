@@ -57,7 +57,7 @@ See the [documentation index](docs/README.md) for all public APIs, with examples
 
 ## HttpClient support
 
-Classes that depend on `HttpClient` are automatically resolved with a substituted `HttpMessageHandler`, returning HTTP 200 OK by default. Verb-specific helpers make setup and verification concise:
+Classes that depend on `HttpClient` are automatically resolved with a substituted `HttpMessageHandler`, returning HTTP 200 OK by default. Verb-specific helpers make setup and verification concise, with matching by URL substring, predicate, or asynchronous predicate (`Func<HttpRequestMessage, Task<bool>>`):
 
 ```csharp
 mocker.SetupHttpGet("/users")
