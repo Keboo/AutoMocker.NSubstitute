@@ -1,4 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -67,6 +69,24 @@ public class OptionsGeneratorTests
     }
 
     [TestMethod]
+    public async Task WhenOnlySimilarlyNamedAssemblyIsReferenced_NoGenerationOccurs()
+    {
+        var similarlyNamedAssembly = CSharpCompilation.Create(
+            "Microsoft.Extensions.Options.Unrelated",
+            references: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        await new VerifyCS.Test
+        {
+            TestCode = "",
+            TestState =
+            {
+                AdditionalReferences = { similarlyNamedAssembly.ToMetadataReference() }
+            }
+        }.RunAsync(TestContext.CancellationToken);
+    }
+
+    [TestMethod]
     public async Task WhenOptionsAbstractionAssemblyIsReferenced_ExtensionMethodIsGenerated()
     {
         await new VerifyCS.Test
@@ -82,6 +102,53 @@ public class OptionsGeneratorTests
                 }
             }
 
+        }.RunAsync(TestContext.CancellationToken);
+    }
+
+    [TestMethod]
+    [DataRow("Microsoft.Extensions.Options", "2.1.1", true)]
+    [DataRow("Microsoft.Extensions.Options", "3.1.0", true)]
+    [DataRow("Microsoft.Extensions.Options", "5.0.0", false)]
+    [DataRow("Microsoft.Extensions.Options", "10.0.9", false)]
+    [DataRow("Microsoft.Extensions.Options.ConfigurationExtensions", "3.1.0", true)]
+    [DataRow("Microsoft.Extensions.Options.ConfigurationExtensions", "10.0.9", false)]
+    public async Task WithOptions_CompilesAgainstResolvedOptionsVersion(string packageName, string version, bool requiresDefaultConstructor)
+    {
+        string expectedSource = requiresDefaultConstructor
+            ? ExpectedOptionsGeneratedFile.Replace("where TClass : class", "where TClass : class, new()")
+            : ExpectedOptionsGeneratedFile;
+
+        await new VerifyCS.Test
+        {
+            ReferenceAssemblies = ReferenceAssemblies.NetStandard.NetStandard20.AddPackages(
+                [new PackageIdentity(packageName, version)]),
+            TestCode = requiresDefaultConstructor
+                ? """
+                  using NSubstitute.AutoMock;
+
+                  public class MyOptions { }
+
+                  public static class Consumer
+                  {
+                      public static void Configure(AutoMocker mocker) => mocker.WithOptions<MyOptions>();
+                  }
+                  """
+                : """
+                  using NSubstitute.AutoMock;
+
+                  public static class Consumer
+                  {
+                      public static void Configure<TOptions>(AutoMocker mocker) where TOptions : class
+                          => mocker.WithOptions<TOptions>();
+                  }
+                  """,
+            TestState =
+            {
+                GeneratedSources =
+                {
+                    GetSourceFile(expectedSource, "AutoMockerOptionsExtensions.g.cs")
+                }
+            }
         }.RunAsync(TestContext.CancellationToken);
     }
 
